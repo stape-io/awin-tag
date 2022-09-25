@@ -25,7 +25,7 @@ if (data.type === 'page_view') {
                 domain: 'auto',
                 path: '/',
                 secure: true,
-                httpOnly: false
+                httpOnly: !!data.useHttpOnlyCookie
             };
 
             if (data.expiration > 0) options['max-age'] = data.expiration;
