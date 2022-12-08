@@ -1,5 +1,7 @@
-homepage: "https://stape.io/"
+homepage: 'https://stape.io/'
 versions:
+  - sha: fffd3aaaac2968be4ec6e7110125d7e95e4544b8
+    changeNotes: Added product level tracking.
   - sha: 0ccecb743b885cb0e0265d5aeceb5ca178907214
     changeNotes: Add HttpOnly cookies option.
   - sha: 0fc3b8bd5d1984dcecc62a506dc061e8c8cb911a
