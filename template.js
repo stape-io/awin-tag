@@ -73,19 +73,19 @@ if (data.type === 'page_view') {
   /**
    * Custom Parameters
    */
-  const customParamenters = ['gtm_s2s_stape'];
+  const customParameters = ['gtm_s2s_stape'];
   const allowedTypesForCustomParameters = ['string', 'number', 'boolean'];
-  if (getType(data.customParamenters) === 'array') {
+  if (getType(data.customParameters) === 'array') {
     data.customParameters.forEach((customParamenter) => {
       if (customParamenter.value) {
         const customParameterType = getType(customParamenter.value);
         if (allowedTypesForCustomParameters.indexOf(customParameterType) !== -1)
-          customParamenters.push(customParamenter.value);
+          customParameters.push(customParamenter.value);
       }
     });
   }
-  customParamenters.forEach((customParamenter, index) => {
-    requestUrl = requestUrl + '&p' + (index + 1) + '=' + customParamenter;
+  customParameters.forEach((customParameter, index) => {
+    requestUrl = requestUrl + '&p' + (index + 1) + '=' + customParameter;
   });
 
   /**
