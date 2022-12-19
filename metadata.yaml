@@ -1,5 +1,7 @@
 homepage: 'https://stape.io/'
 versions:
+  - sha: 6dfe57f93e034ba9fd41501e8262b9bd6443e893
+    changeNotes: Fix custom parameters.
   - sha: fffd3aaaac2968be4ec6e7110125d7e95e4544b8
     changeNotes: Added product level tracking.
   - sha: 0ccecb743b885cb0e0265d5aeceb5ca178907214
