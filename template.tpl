@@ -703,11 +703,28 @@ ___SERVER_PERMISSIONS___
   }
 ]
 
-
 ___TESTS___
 
-scenarios: []
+scenarios:
+- name: Test custom parameters
+  code: |2-
 
+    const logToConsole = require('logToConsole');
+
+    const mockData = {
+      'type': 'purchase',
+      'customParameters': [
+        {value: 'custom_param'},
+      ],
+    };
+
+    mock('sendHttpRequest', function(url, onSuccess, onFailure) {
+        logToConsole(url);
+      assertThat(url).contains('p1=gtm_s2s_stape');
+      assertThat(url).contains('p2=custom_param');
+    });
+
+    runCode(mockData);
 
 ___NOTES___
 
