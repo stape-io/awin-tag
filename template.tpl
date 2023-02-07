@@ -30,61 +30,6 @@ ___TEMPLATE_PARAMETERS___
 
 [
   {
-    "type": "RADIO",
-    "name": "type",
-    "displayName": "Event Type",
-    "radioItems": [
-      {
-        "value": "page_view",
-        "displayValue": "PageView"
-      },
-      {
-        "value": "conversion",
-        "displayValue": "Conversion"
-      }
-    ],
-    "simpleValueType": true,
-    "defaultValue": "page_view",
-    "help": "\u003cb\u003ePageView\u003c/b\u003e - stores the awc URL parameter inside the awin_ awc cookie\u003cbr\u003e\u003cbr\u003e\n\u003cb\u003eConversion\u003c/b\u003e - Send request with data about the conversion to the Awin"
-  },
-  {
-    "type": "TEXT",
-    "name": "expiration",
-    "displayName": "Expiration time for the awc cookie in seconds.",
-    "simpleValueType": true,
-    "enablingConditions": [
-      {
-        "paramName": "type",
-        "paramValue": "page_view",
-        "type": "EQUALS"
-      }
-    ],
-    "valueValidators": [
-      {
-        "type": "NON_EMPTY"
-      },
-      {
-        "type": "NON_NEGATIVE_NUMBER"
-      }
-    ],
-    "defaultValue": 31536000,
-    "help": "One year by default. Use 0 for saving only for the session."
-  },
-  {
-    "type": "CHECKBOX",
-    "name": "useHttpOnlyCookie",
-    "checkboxText": "Use HttpOnly cookies",
-    "simpleValueType": true,
-    "enablingConditions": [
-      {
-        "paramName": "type",
-        "paramValue": "page_view",
-        "type": "EQUALS"
-      }
-    ],
-    "help": "Forbids JavaScript from accessing the cookie if enabled."
-  },
-  {
     "type": "GROUP",
     "name": "conversionGroup",
     "groupStyle": "NO_ZIPPY",
@@ -198,11 +143,37 @@ ___TEMPLATE_PARAMETERS___
         ]
       }
     ],
-    "enablingConditions": [
+    "enablingConditions": []
+  },
+  {
+    "type": "GROUP",
+    "name": "eventNamesGroup",
+    "displayName": "Event Names",
+    "groupStyle": "ZIPPY_CLOSED",
+    "subParams": [
       {
-        "paramName": "type",
-        "paramValue": "conversion",
-        "type": "EQUALS"
+        "type": "TEXT",
+        "name": "pageViewEvent",
+        "displayName": "Page view event name",
+        "simpleValueType": true,
+        "defaultValue": "page_view",
+        "valueValidators": [
+          {
+            "type": "NON_EMPTY"
+          }
+        ]
+      },
+      {
+        "type": "TEXT",
+        "name": "purchaseEvent",
+        "displayName": "Purchase event name",
+        "simpleValueType": true,
+        "defaultValue": "purchase",
+        "valueValidators": [
+          {
+            "type": "NON_EMPTY"
+          }
+        ]
       }
     ]
   },
@@ -233,13 +204,7 @@ ___TEMPLATE_PARAMETERS___
         "defaultValue": "debug"
       }
     ],
-    "enablingConditions": [
-      {
-        "paramName": "type",
-        "paramValue": "conversion",
-        "type": "EQUALS"
-      }
-    ]
+    "enablingConditions": []
   }
 ]
 
@@ -259,154 +224,168 @@ const logToConsole = require('logToConsole');
 const getContainerVersion = require('getContainerVersion');
 const getType = require('getType');
 
-const containerVersion = getContainerVersion();
-const isDebug = containerVersion.debugMode;
 const isLoggingEnabled = determinateIsLoggingEnabled();
 const traceId = getRequestHeader('trace-id');
 const eventData = getAllEventData();
+const eventName = eventData.event_name;
 
-if (data.type === 'page_view') {
-  const url = getEventData('page_location') || getRequestHeader('referer');
+const PAGE_VIEW_EVENT = data.pageViewEvent || 'page_view';
+const PURCHASE_EVENT = data.purchaseEvent || 'purchase';
 
-  if (url) {
-    const value = parseUrl(url).searchParams.awc;
+switch (eventName) {
+  case PAGE_VIEW_EVENT:
+    const url = getEventData('page_location') || getRequestHeader('referer');
 
-    if (value) {
-      const options = {
-        domain: 'auto',
-        path: '/',
-        secure: true,
-        httpOnly: !!data.useHttpOnlyCookie,
-      };
+    if (url) {
+      const value = parseUrl(url).searchParams.awc;
 
-      if (data.expiration > 0) options['max-age'] = data.expiration;
+      if (value) {
+        const options = {
+          domain: 'auto',
+          path: '/',
+          secure: true,
+          httpOnly: true,
+          'max-age': 31536000, // 1 year
+        };
 
-      setCookie('awin_awc', value, options, false);
-    }
-  }
-
-  data.gtmOnSuccess();
-} else {
-  const awc = getCookieValues('awin_awc')[0] || '';
-
-  let requestUrl =
-    'https://www.awin1.com/sread.php?tt=ss&tv=2&merchant=' +
-    enc(data.advertiserId);
-  requestUrl = requestUrl + '&amount=' + enc(data.totalAmount);
-  requestUrl = requestUrl + '&ch=' + enc(data.channel);
-  requestUrl = requestUrl + '&vc=' + enc(data.voucherCode);
-  requestUrl = requestUrl + '&cr=' + enc(data.currencyCode);
-  requestUrl = requestUrl + '&ref=' + enc(data.orderReference);
-  requestUrl = requestUrl + '&testmode=' + (data.isTest ? 1 : 0);
-
-  if (awc) {
-    requestUrl = requestUrl + '&cks=' + enc(awc);
-  }
-
-  /**
-   * Commission Group
-   */
-  if (
-    data.commissionGroup &&
-    (data.commissionGroup.indexOf(':') !== -1 || data.totalAmount)
-  ) {
-    const cg =
-      data.commissionGroup.indexOf(':') !== -1
-        ? data.commissionGroup
-        : data.commissionGroup + ':' + data.totalAmount;
-
-    requestUrl = requestUrl + '&parts=' + enc(cg);
-  }
-
-  /**
-   * Custom Parameters
-   */
-  const customParameters = ['gtm_s2s_stape'];
-  const allowedTypesForCustomParameters = ['string', 'number', 'boolean'];
-  if (getType(data.customParameters) === 'array') {
-    data.customParameters.forEach((customParamenter) => {
-      if (customParamenter.value) {
-        const customParameterType = getType(customParamenter.value);
-        if (allowedTypesForCustomParameters.indexOf(customParameterType) !== -1)
-          customParameters.push(customParamenter.value);
+        setCookie('awin_awc', value, options, false);
       }
-    });
-  }
-  customParameters.forEach((customParameter, index) => {
-    requestUrl = requestUrl + '&p' + (index + 1) + '=' + customParameter;
-  });
+    }
 
-  /**
-   * Product Level Tracking
-   */
-  const items = data.productsOverride || eventData.items || [];
-  const productRow =
-    'AW:P|{{advertiserId}}|{{orderReference}}|{{productId}}|{{productName}}|{{productItemPrice}}|{{productQuantity}}|{{productSku}}|{{commissionGroupCode}}|{{productCategory}}';
-  if (getType(items) === 'array') {
-    items.forEach((item, index) => {
-      let value = productRow.replace(
-        '{{advertiserId}}',
-        item.advertiser_id || ''
-      );
-      value = value.replace(
-        '{{orderReference}}',
-        item.order_reference || eventData.transaction_id || ''
-      );
-      value = value.replace('{{productId}}', item.item_id || '');
-      value = value.replace('{{productName}}', item.item_name || '');
-      value = value.replace('{{productItemPrice}}', item.price || '');
-      value = value.replace('{{productQuantity}}', item.quantity || '');
-      value = value.replace(
-        '{{productSku}}',
-        item.item_sku || item.item_id || ''
-      );
-      value = value.replace(
-        '{{commissionGroupCode}}',
-        item.commission_group_code || 'DEFAULT'
-      );
-      value = value.replace('{{productCategory}}', item.item_category || '');
-      requestUrl = requestUrl + '&bd[' + index + ']=' + value;
-    });
-  }
+    data.gtmOnSuccess();
+    break;
+  case PURCHASE_EVENT:
+    const awc = getCookieValues('awin_awc')[0] || '';
+    if (awc) {
+      let requestUrl =
+        'https://www.awin1.com/sread.php?tt=ss&tv=2&merchant=' +
+        enc(data.advertiserId);
+      requestUrl = requestUrl + '&amount=' + enc(data.totalAmount);
+      requestUrl = requestUrl + '&ch=' + enc(data.channel);
+      requestUrl = requestUrl + '&vc=' + enc(data.voucherCode);
+      requestUrl = requestUrl + '&cr=' + enc(data.currencyCode);
+      requestUrl = requestUrl + '&ref=' + enc(data.orderReference);
+      requestUrl = requestUrl + '&testmode=' + (data.isTest ? 1 : 0);
 
-  if (isLoggingEnabled) {
-    logToConsole(
-      JSON.stringify({
-        Name: 'Awin',
-        Type: 'Request',
-        TraceId: traceId,
-        EventName: 'Conversion',
-        RequestMethod: 'GET',
-        RequestUrl: requestUrl,
-      })
-    );
-  }
+      requestUrl = requestUrl + '&cks=' + enc(awc);
 
-  sendHttpRequest(
-    requestUrl,
-    (statusCode, headers, body) => {
+      /**
+       * Commission Group
+       */
+      if (
+        data.commissionGroup &&
+        (data.commissionGroup.indexOf(':') !== -1 || data.totalAmount)
+      ) {
+        const cg =
+          data.commissionGroup.indexOf(':') !== -1
+            ? data.commissionGroup
+            : data.commissionGroup + ':' + data.totalAmount;
+
+        requestUrl = requestUrl + '&parts=' + enc(cg);
+      }
+
+      /**
+       * Custom Parameters
+       */
+      const customParameters = ['gtm_s2s_stape'];
+      const allowedTypesForCustomParameters = ['string', 'number', 'boolean'];
+      if (getType(data.customParameters) === 'array') {
+        data.customParameters.forEach((customParamenter) => {
+          if (customParamenter.value) {
+            const customParameterType = getType(customParamenter.value);
+            if (
+              allowedTypesForCustomParameters.indexOf(customParameterType) !==
+              -1
+            )
+              customParameters.push(customParamenter.value);
+          }
+        });
+      }
+      customParameters.forEach((customParameter, index) => {
+        requestUrl = requestUrl + '&p' + (index + 1) + '=' + customParameter;
+      });
+
+      /**
+       * Product Level Tracking
+       */
+      const items = data.productsOverride || eventData.items || [];
+      const productRow =
+        'AW:P|{{advertiserId}}|{{orderReference}}|{{productId}}|{{productName}}|{{productItemPrice}}|{{productQuantity}}|{{productSku}}|{{commissionGroupCode}}|{{productCategory}}';
+      if (getType(items) === 'array') {
+        items.forEach((item, index) => {
+          let value = productRow.replace(
+            '{{advertiserId}}',
+            item.advertiser_id || data.advertiserId || ''
+          );
+          value = value.replace(
+            '{{orderReference}}',
+            item.order_reference || eventData.transaction_id || ''
+          );
+          value = value.replace('{{productId}}', item.item_id || '');
+          value = value.replace('{{productName}}', item.item_name || '');
+          value = value.replace('{{productItemPrice}}', item.price || '');
+          value = value.replace('{{productQuantity}}', item.quantity || '');
+          value = value.replace(
+            '{{productSku}}',
+            item.item_sku || item.item_id || ''
+          );
+          value = value.replace(
+            '{{commissionGroupCode}}',
+            item.commission_group_code || 'DEFAULT'
+          );
+          value = value.replace(
+            '{{productCategory}}',
+            item.item_category || ''
+          );
+          requestUrl = requestUrl + '&bd[' + index + ']=' + value;
+        });
+      }
+
       if (isLoggingEnabled) {
         logToConsole(
           JSON.stringify({
             Name: 'Awin',
-            Type: 'Response',
+            Type: 'Request',
             TraceId: traceId,
             EventName: 'Conversion',
-            ResponseStatusCode: statusCode,
-            ResponseHeaders: headers,
-            ResponseBody: body,
+            RequestMethod: 'GET',
+            RequestUrl: requestUrl,
           })
         );
       }
 
-      if (statusCode >= 200 && statusCode < 300) {
-        data.gtmOnSuccess();
-      } else {
-        data.gtmOnFailure();
-      }
-    },
-    { method: 'GET' }
-  );
+      sendHttpRequest(
+        requestUrl,
+        (statusCode, headers, body) => {
+          if (isLoggingEnabled) {
+            logToConsole(
+              JSON.stringify({
+                Name: 'Awin',
+                Type: 'Response',
+                TraceId: traceId,
+                EventName: 'Conversion',
+                ResponseStatusCode: statusCode,
+                ResponseHeaders: headers,
+                ResponseBody: body,
+              })
+            );
+          }
+
+          if (statusCode >= 200 && statusCode < 300) {
+            data.gtmOnSuccess();
+          } else {
+            data.gtmOnFailure();
+          }
+        },
+        { method: 'GET' }
+      );
+    } else {
+      data.gtmOnSuccess();
+    }
+    break;
+  default:
+    data.gtmOnSuccess();
+    break;
 }
 
 function enc(data) {
@@ -415,6 +394,12 @@ function enc(data) {
 }
 
 function determinateIsLoggingEnabled() {
+  const containerVersion = getContainerVersion();
+  const isDebug = !!(
+    containerVersion &&
+    (containerVersion.debugMode || containerVersion.previewMode)
+  );
+
   if (!data.logType) {
     return isDebug;
   }
