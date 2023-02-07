@@ -1,14 +1,14 @@
 # Awin tag for Google Tag Manager Server Side
 
-There are two types of events that Awin tag has: PageView and Conversion. 
+There are two types of events that Awin tag supports: PageView and Conversion. 
 
 - **Pageview event** stores the awc URL parameter inside the awin_awc cookie. 
 - **Conversion event** sends the HTTP request with the specified conversion data to Awin.
 
 ## How to use the Awin tag:
 
-1. When setting up Pageview event you should only configure awin_awc cookie lifetime. Pageview tag automatically extracts awc parameter from the URL and stores it inside awin_awc cookie.
-2. Conversion events. The only required field for the conversion event is Merchant ID, other fields are optional.
+1. Create an Awin tag and add Page View and Purchase triggers
+2. Add the only required field for the conversion event - Merchant ID, other fields are optional.
 
 **Merchant ID** -  advertiser program ID
 
