@@ -2,7 +2,7 @@
 
 There are two types of events that Awin tag supports: PageView and Conversion. 
 
-- **Page View event** stores the awc URL parameter inside the awin_awc cookie. 
+- **PageView event** stores the awc URL parameter inside the awin_awc cookie. 
 - **Conversion event** sends the HTTP request with the specified conversion data to Awin.
 
 ## How to use the Awin tag:
