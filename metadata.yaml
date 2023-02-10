@@ -1,5 +1,7 @@
 homepage: 'https://stape.io/'
 versions:
+  - sha: 3a577670005c8d0e9d289ab8be33cf094fdb41e7
+    changeNotes: Allow empty custom parameters.
   - sha: 257d78e05430322a1f73092a3419e923936722d1
     changeNotes: Support for custom event names.
   - sha: 6dfe57f93e034ba9fd41501e8262b9bd6443e893
