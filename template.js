@@ -48,7 +48,7 @@ switch (eventName) {
         'https://www.awin1.com/sread.php?tt=ss&tv=2&merchant=' +
         enc(data.advertiserId);
       requestUrl = requestUrl + '&amount=' + enc(data.totalAmount);
-      requestUrl = requestUrl + '&ch=' + enc(data.channel);
+      requestUrl = requestUrl + '&ch=' + enc(data.channel || 'aw');
       requestUrl = requestUrl + '&vc=' + enc(data.voucherCode);
       requestUrl = requestUrl + '&cr=' + enc(data.currencyCode);
       requestUrl = requestUrl + '&ref=' + enc(data.orderReference);
@@ -77,19 +77,17 @@ switch (eventName) {
       const customParameters = ['gtm_s2s_stape'];
       const allowedTypesForCustomParameters = ['string', 'number', 'boolean'];
       if (getType(data.customParameters) === 'array') {
-        data.customParameters.forEach((customParamenter) => {
-          if (customParamenter.value) {
-            const customParameterType = getType(customParamenter.value);
-            if (
-              allowedTypesForCustomParameters.indexOf(customParameterType) !==
-              -1
-            )
-              customParameters.push(customParamenter.value);
-          }
+        data.customParameters.forEach((customParameter) => {
+          customParameters.push(customParameter.value);
         });
       }
       customParameters.forEach((customParameter, index) => {
-        requestUrl = requestUrl + '&p' + (index + 1) + '=' + customParameter;
+        if (
+          allowedTypesForCustomParameters.indexOf(getType(customParameter)) !==
+          -1
+        ) {
+          requestUrl = requestUrl + '&p' + (index + 1) + '=' + customParameter;
+        }
       });
 
       /**
