@@ -24,9 +24,10 @@ switch (eventName) {
     const url = getEventData('page_location') || getRequestHeader('referer');
 
     if (url) {
-      const value = parseUrl(url).searchParams.awc;
-
-      if (value) {
+      const searchParams = parseUrl(url).searchParams;
+      const deduplicationParamName =
+        data.deduplicationQueryParameterName || 'source';
+      if (searchParams.awc) {
         const options = {
           domain: 'auto',
           path: '/',
@@ -35,7 +36,23 @@ switch (eventName) {
           'max-age': 31536000, // 1 year
         };
 
-        setCookie('awin_awc', value, options, false);
+        setCookie('awin_awc', searchParams.awc, options, false);
+      }
+      if (searchParams[deduplicationParamName]) {
+        const options = {
+          domain: 'auto',
+          path: '/',
+          secure: true,
+          httpOnly: true,
+          'max-age': 31536000, // 1 year
+        };
+
+        setCookie(
+          'awin_source',
+          searchParams[deduplicationParamName],
+          options,
+          false
+        );
       }
     }
 
@@ -43,15 +60,18 @@ switch (eventName) {
     break;
   case PURCHASE_EVENT:
     const awc = getCookieValues('awin_awc')[0] || '';
+    const source = getCookieValues('awin_source')[0];
     if (awc) {
       let requestUrl =
         'https://www.awin1.com/sread.php?tt=ss&tv=2&merchant=' +
         enc(data.advertiserId);
       requestUrl = requestUrl + '&amount=' + enc(data.totalAmount);
-      requestUrl = requestUrl + '&ch=' + enc(data.channel || 'aw');
+      requestUrl = requestUrl + '&ch=' + enc(data.channel || source || 'aw');
       requestUrl = requestUrl + '&vc=' + enc(data.voucherCode);
       requestUrl = requestUrl + '&cr=' + enc(data.currencyCode);
       requestUrl = requestUrl + '&ref=' + enc(data.orderReference);
+      requestUrl =
+        requestUrl + '&customeracquisition=' + enc(data.customerAcquisition);
       requestUrl = requestUrl + '&testmode=' + (data.isTest ? 1 : 0);
 
       requestUrl = requestUrl + '&cks=' + enc(awc);

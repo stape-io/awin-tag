@@ -105,6 +105,21 @@ ___TEMPLATE_PARAMETERS___
       },
       {
         "type": "TEXT",
+        "name": "deduplicationQueryParameterName",
+        "displayName": "Deduplication Query Parameter Name",
+        "simpleValueType": true,
+        "defaultValue": "source",
+        "help": "Specify deduplication query parameter name, it will be used if \u003cb\u003eLast paid click referring channel\u003c/b\u003e doesn\u0027t exist"
+      },
+      {
+        "type": "TEXT",
+        "name": "customerAcquisition",
+        "displayName": "Customer Acquisition",
+        "simpleValueType": true,
+        "help": "Awin\u0027s tracking supports reporting on whether the customer making a purchase is a new customer acquisition or a returning customer to your store.\nAllowed values NEW or RETURNING to identify the customer type."
+      },
+      {
+        "type": "TEXT",
         "name": "productsOverride",
         "displayName": "Products Override",
         "simpleValueType": true,
@@ -231,9 +246,10 @@ switch (eventName) {
     const url = getEventData('page_location') || getRequestHeader('referer');
 
     if (url) {
-      const value = parseUrl(url).searchParams.awc;
-
-      if (value) {
+      const searchParams = parseUrl(url).searchParams;
+      const deduplicationParamName =
+        data.deduplicationQueryParameterName || 'source';
+      if (searchParams.awc) {
         const options = {
           domain: 'auto',
           path: '/',
@@ -242,7 +258,23 @@ switch (eventName) {
           'max-age': 31536000, // 1 year
         };
 
-        setCookie('awin_awc', value, options, false);
+        setCookie('awin_awc', searchParams.awc, options, false);
+      }
+      if (searchParams[deduplicationParamName]) {
+        const options = {
+          domain: 'auto',
+          path: '/',
+          secure: true,
+          httpOnly: true,
+          'max-age': 31536000, // 1 year
+        };
+
+        setCookie(
+          'awin_source',
+          searchParams[deduplicationParamName],
+          options,
+          false
+        );
       }
     }
 
@@ -250,15 +282,18 @@ switch (eventName) {
     break;
   case PURCHASE_EVENT:
     const awc = getCookieValues('awin_awc')[0] || '';
+    const source = getCookieValues('awin_source')[0];
     if (awc) {
       let requestUrl =
         'https://www.awin1.com/sread.php?tt=ss&tv=2&merchant=' +
         enc(data.advertiserId);
       requestUrl = requestUrl + '&amount=' + enc(data.totalAmount);
-      requestUrl = requestUrl + '&ch=' + enc(data.channel || 'aw');
+      requestUrl = requestUrl + '&ch=' + enc(data.channel || source || 'aw');
       requestUrl = requestUrl + '&vc=' + enc(data.voucherCode);
       requestUrl = requestUrl + '&cr=' + enc(data.currencyCode);
       requestUrl = requestUrl + '&ref=' + enc(data.orderReference);
+      requestUrl =
+        requestUrl + '&customeracquisition=' + enc(data.customerAcquisition);
       requestUrl = requestUrl + '&testmode=' + (data.isTest ? 1 : 0);
 
       requestUrl = requestUrl + '&cks=' + enc(awc);
@@ -523,6 +558,53 @@ ___SERVER_PERMISSIONS___
                     "string": "any"
                   }
                 ]
+              },
+              {
+                "type": 3,
+                "mapKey": [
+                  {
+                    "type": 1,
+                    "string": "name"
+                  },
+                  {
+                    "type": 1,
+                    "string": "domain"
+                  },
+                  {
+                    "type": 1,
+                    "string": "path"
+                  },
+                  {
+                    "type": 1,
+                    "string": "secure"
+                  },
+                  {
+                    "type": 1,
+                    "string": "session"
+                  }
+                ],
+                "mapValue": [
+                  {
+                    "type": 1,
+                    "string": "awin_source"
+                  },
+                  {
+                    "type": 1,
+                    "string": "*"
+                  },
+                  {
+                    "type": 1,
+                    "string": "*"
+                  },
+                  {
+                    "type": 1,
+                    "string": "any"
+                  },
+                  {
+                    "type": 1,
+                    "string": "any"
+                  }
+                ]
               }
             ]
           }
@@ -636,6 +718,10 @@ ___SERVER_PERMISSIONS___
               {
                 "type": 1,
                 "string": "awin_awc"
+              },
+              {
+                "type": 1,
+                "string": "awin_source"
               }
             ]
           }
