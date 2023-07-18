@@ -175,11 +175,12 @@ switch (eventName) {
               })
             );
           }
-
-          if (statusCode >= 200 && statusCode < 300) {
-            data.gtmOnSuccess();
-          } else {
-            data.gtmOnFailure();
+          if (!data.useOptimisticScenario) {
+            if (statusCode >= 200 && statusCode < 300) {
+              data.gtmOnSuccess();
+            } else {
+              data.gtmOnFailure();
+            }
           }
         },
         { method: 'GET' }
@@ -192,7 +193,9 @@ switch (eventName) {
     data.gtmOnSuccess();
     break;
 }
-
+if (data.useOptimisticScenario) {
+  data.gtmOnSuccess();
+}
 function enc(data) {
   data = data || '';
   return encodeUriComponent(data);

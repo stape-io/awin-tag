@@ -133,6 +133,13 @@ ___TEMPLATE_PARAMETERS___
         "help": "If checked, the tag will be fired in test mode and the reported conversion will be ignored."
       },
       {
+        "type": "CHECKBOX",
+        "name": "useOptimisticScenario",
+        "checkboxText": "Use Optimistic Scenario",
+        "simpleValueType": true,
+        "help": "The tag will call gtmOnSuccess() without waiting for a response from the API. This will speed up sGTM response time however your tag will always return the status fired successfully even in case it is not."
+      },
+      {
         "type": "GROUP",
         "name": "customParametersGroup",
         "displayName": "Custom Parameters",
@@ -152,6 +159,34 @@ ___TEMPLATE_PARAMETERS___
             ]
           }
         ]
+      }
+    ]
+  },
+  {
+    "type": "GROUP",
+    "name": "logsGroup",
+    "displayName": "Logs Settings",
+    "groupStyle": "ZIPPY_CLOSED",
+    "subParams": [
+      {
+        "type": "RADIO",
+        "name": "logType",
+        "radioItems": [
+          {
+            "value": "no",
+            "displayValue": "Do not log"
+          },
+          {
+            "value": "debug",
+            "displayValue": "Log to console during debug and preview"
+          },
+          {
+            "value": "always",
+            "displayValue": "Always log to console"
+          }
+        ],
+        "simpleValueType": true,
+        "defaultValue": "debug"
       }
     ]
   },
@@ -184,34 +219,6 @@ ___TEMPLATE_PARAMETERS___
             "type": "NON_EMPTY"
           }
         ]
-      }
-    ]
-  },
-  {
-    "type": "GROUP",
-    "name": "logsGroup",
-    "displayName": "Logs Settings",
-    "groupStyle": "ZIPPY_CLOSED",
-    "subParams": [
-      {
-        "type": "RADIO",
-        "name": "logType",
-        "radioItems": [
-          {
-            "value": "no",
-            "displayValue": "Do not log"
-          },
-          {
-            "value": "debug",
-            "displayValue": "Log to console during debug and preview"
-          },
-          {
-            "value": "always",
-            "displayValue": "Always log to console"
-          }
-        ],
-        "simpleValueType": true,
-        "defaultValue": "debug"
       }
     ]
   }
