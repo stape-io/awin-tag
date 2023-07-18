@@ -1,5 +1,7 @@
 homepage: 'https://stape.io/'
 versions:
+  - sha: 6737a9070d141c1495f3d0e9a1c213e2aeee2ef6
+  - changeNotes: Add ability to use OptimisticScenario
   - sha: 28b451cd26a2932765e3c1f588902e380ef735db
     changeNotes: Added support for custom deduplication param.
   - sha: 3a577670005c8d0e9d289ab8be33cf094fdb41e7
