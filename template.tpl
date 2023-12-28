@@ -232,6 +232,7 @@ const getAllEventData = require('getAllEventData');
 const logToConsole = require('logToConsole');
 const getContainerVersion = require('getContainerVersion');
 const getType = require('getType');
+const makeString = require('makeString');
 
 const isLoggingEnabled = determinateIsLoggingEnabled();
 const traceId = getRequestHeader('trace-id');
@@ -350,7 +351,10 @@ switch (eventName) {
           );
           value = value.replace('{{productId}}', item.item_id || '');
           value = value.replace('{{productName}}', item.item_name || '');
-          value = value.replace('{{productItemPrice}}', item.price || '');
+          value = value.replace(
+            '{{productItemPrice}}',
+            getPriceString(item.price)
+          );
           value = value.replace('{{productQuantity}}', item.quantity || '');
           value = value.replace(
             '{{productSku}}',
@@ -418,6 +422,12 @@ switch (eventName) {
 function enc(data) {
   data = data || '';
   return encodeUriComponent(data);
+}
+
+function getPriceString(price) {
+  const priceType = getType(price);
+  const isEmptyPrice = priceType === 'undefined' || priceType === 'null';
+  return isEmptyPrice ? '' : makeString(price);
 }
 
 function determinateIsLoggingEnabled() {
