@@ -1,5 +1,7 @@
 homepage: 'https://stape.io/'
 versions:
+  - sha: 877fd084ef88060e4097506938b6e15a03cbd118
+    changeNotes: Fix product level tracking encoding.
   - sha: fa422322812ad3ab306f7885ec18927b351d9785
     changeNotes: Fix productItemPrice.
   - sha: 28b451cd26a2932765e3c1f588902e380ef735db

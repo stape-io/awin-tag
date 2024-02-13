@@ -347,10 +347,10 @@ switch (eventName) {
           );
           value = value.replace(
             '{{orderReference}}',
-            item.order_reference || eventData.transaction_id || ''
+            enc(item.order_reference || eventData.transaction_id || '')
           );
-          value = value.replace('{{productId}}', item.item_id || '');
-          value = value.replace('{{productName}}', item.item_name || '');
+          value = value.replace('{{productId}}', enc(item.item_id || ''));
+          value = value.replace('{{productName}}', enc(item.item_name || ''));
           value = value.replace(
             '{{productItemPrice}}',
             getPriceString(item.price)
@@ -358,7 +358,7 @@ switch (eventName) {
           value = value.replace('{{productQuantity}}', item.quantity || '');
           value = value.replace(
             '{{productSku}}',
-            item.item_sku || item.item_id || ''
+            enc(item.item_sku || item.item_id || '')
           );
           value = value.replace(
             '{{commissionGroupCode}}',
@@ -366,7 +366,7 @@ switch (eventName) {
           );
           value = value.replace(
             '{{productCategory}}',
-            item.item_category || ''
+            enc(item.item_category || '')
           );
           requestUrl = requestUrl + '&bd[' + index + ']=' + value;
         });
