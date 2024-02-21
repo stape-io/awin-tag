@@ -1,5 +1,7 @@
 homepage: 'https://stape.io/'
 versions:
+  - sha: 95625e0b6ad9e77fc5631aefbb66aa61aa757bd9
+    changeNotes: Remove cookie check.
   - sha: 877fd084ef88060e4097506938b6e15a03cbd118
     changeNotes: Fix product level tracking encoding.
   - sha: fa422322812ad3ab306f7885ec18927b351d9785
