@@ -284,7 +284,6 @@ switch (eventName) {
   case PURCHASE_EVENT:
     const awc = getCookieValues('awin_awc')[0] || '';
     const source = getCookieValues('awin_source')[0];
-    if (awc) {
       let requestUrl =
         'https://www.awin1.com/sread.php?tt=ss&tv=2&merchant=' +
         enc(data.advertiserId);
@@ -410,9 +409,6 @@ switch (eventName) {
         },
         { method: 'GET' }
       );
-    } else {
-      data.gtmOnSuccess();
-    }
     break;
   default:
     data.gtmOnSuccess();
