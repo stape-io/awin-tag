@@ -1,5 +1,7 @@
 homepage: 'https://stape.io/'
 versions:
+  - sha: 0f602a247e562a461c692a6e5027507ed4f8ff81
+    changeNotes: Awin consent signal.
   - sha: 95625e0b6ad9e77fc5631aefbb66aa61aa757bd9
     changeNotes: Remove cookie check.
   - sha: 877fd084ef88060e4097506938b6e15a03cbd118
