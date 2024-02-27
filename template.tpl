@@ -204,6 +204,35 @@ ___TEMPLATE_PARAMETERS___
   },
   {
     "type": "GROUP",
+    "name": "consentGroup",
+    "displayName": "Consent Settings",
+    "groupStyle": "ZIPPY_CLOSED",
+    "subParams": [
+      {
+        "type": "RADIO",
+        "name": "consentType",
+        "displayName": "",
+        "radioItems": [
+          {
+            "value": "none",
+            "displayValue": "none"
+          },
+          {
+            "value": "ad_storage",
+            "displayValue": "ad_storage"
+          },
+          {
+            "value": "analytics_storage",
+            "displayValue": "analytics_storage"
+          }
+        ],
+        "simpleValueType": true,
+        "defaultValue": "none"
+      }
+    ]
+  },
+  {
+    "type": "GROUP",
     "name": "logsGroup",
     "displayName": "Logs Settings",
     "groupStyle": "ZIPPY_CLOSED",
@@ -256,6 +285,11 @@ const eventName = eventData.event_name;
 
 const PAGE_VIEW_EVENT = data.pageViewEvent || 'page_view';
 const PURCHASE_EVENT = data.purchaseEvent || 'purchase';
+
+if (!isConsentGiven()) {
+  data.gtmOnFailure();
+  return;
+}
 
 switch (eventName) {
   case PAGE_VIEW_EVENT:
@@ -440,6 +474,23 @@ function getPriceString(price) {
   const priceType = getType(price);
   const isEmptyPrice = priceType === 'undefined' || priceType === 'null';
   return isEmptyPrice ? '' : makeString(price);
+}
+
+function getGaConsentState() {
+  const xGaGcs = getRequestHeader('x-ga-gcs') || '';
+  return {
+    ad_storage: xGaGcs[2] === '1',
+    analytics_storage: xGaGcs[3] === '1',
+  };
+}
+
+function isConsentGiven() {
+  const consentState = eventData.consent_state || getGaConsentState();
+  return (
+    !data.consentType ||
+    data.consentType === 'none' ||
+    !!consentState[data.consentType]
+  );
 }
 
 function determinateIsLoggingEnabled() {
@@ -677,6 +728,21 @@ ___SERVER_PERMISSIONS___
                   {
                     "type": 1,
                     "string": "referer"
+                  }
+                ]
+              },
+              {
+                "type": 3,
+                "mapKey": [
+                  {
+                    "type": 1,
+                    "string": "headerName"
+                  }
+                ],
+                "mapValue": [
+                  {
+                    "type": 1,
+                    "string": "x-ga-gcs"
                   }
                 ]
               }
