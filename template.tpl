@@ -646,44 +646,6 @@ ___SERVER_PERMISSIONS___
       },
       "param": [
         {
-          "key": "headerWhitelist",
-          "value": {
-            "type": 2,
-            "listItem": [
-              {
-                "type": 3,
-                "mapKey": [
-                  {
-                    "type": 1,
-                    "string": "headerName"
-                  }
-                ],
-                "mapValue": [
-                  {
-                    "type": 1,
-                    "string": "trace-id"
-                  }
-                ]
-              },
-              {
-                "type": 3,
-                "mapKey": [
-                  {
-                    "type": 1,
-                    "string": "headerName"
-                  }
-                ],
-                "mapValue": [
-                  {
-                    "type": 1,
-                    "string": "referer"
-                  }
-                ]
-              }
-            ]
-          }
-        },
-        {
           "key": "headersAllowed",
           "value": {
             "type": 8,
@@ -701,7 +663,7 @@ ___SERVER_PERMISSIONS___
           "key": "headerAccess",
           "value": {
             "type": 1,
-            "string": "specific"
+            "string": "any"
           }
         },
         {
