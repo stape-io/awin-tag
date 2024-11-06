@@ -33,7 +33,7 @@ switch (eventName) {
           domain: 'auto',
           path: '/',
           secure: true,
-          httpOnly: true,
+          httpOnly: false,
           'max-age': 31536000, // 1 year
         };
 
@@ -44,7 +44,7 @@ switch (eventName) {
           domain: 'auto',
           path: '/',
           secure: true,
-          httpOnly: true,
+          httpOnly: false,
           'max-age': 31536000, // 1 year
         };
 
@@ -62,7 +62,7 @@ switch (eventName) {
   case PURCHASE_EVENT:
     const consentSignal = makeString(data.consentSignal || '');
     const consentDeclined = ['0', 'false'].indexOf(consentSignal) !== -1;
-    const awc = consentDeclined ? '' : getCookieValues('awin_awc')[0] || '';
+    const awc = consentDeclined ? '' : data.clickId || getCookieValues('awin_awc')[0] || '';
     const source = getCookieValues('awin_source')[0];
     let requestUrl =
       'https://www.awin1.com/sread.php?tt=ss&tv=2&merchant=' +
