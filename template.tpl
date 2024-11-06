@@ -141,6 +141,13 @@ ___TEMPLATE_PARAMETERS___
         "help": "Accepted values is: 0,1,true,false"
       },
       {
+        "type": "TEXT",
+        "name": "clickId",
+        "displayName": "Awin Click ID (optional)",
+        "simpleValueType": true,
+        "help": "Override Awin Click ID"
+      },
+      {
         "type": "CHECKBOX",
         "name": "isTest",
         "checkboxText": "In test mode",
@@ -256,10 +263,16 @@ const eventName = eventData.event_name;
 
 const PAGE_VIEW_EVENT = data.pageViewEvent || 'page_view';
 const PURCHASE_EVENT = data.purchaseEvent || 'purchase';
+const url = getEventData('page_location') || getRequestHeader('referer');
+
+
+if (url && url.lastIndexOf('https://gtm-msr.appspot.com/', 0) === 0) {
+  return data.gtmOnSuccess();
+}
 
 switch (eventName) {
   case PAGE_VIEW_EVENT:
-    const url = getEventData('page_location') || getRequestHeader('referer');
+    
 
     if (url) {
       const searchParams = parseUrl(url).searchParams;
@@ -270,7 +283,7 @@ switch (eventName) {
           domain: 'auto',
           path: '/',
           secure: true,
-          httpOnly: true,
+          httpOnly: false,
           'max-age': 31536000, // 1 year
         };
 
@@ -281,7 +294,7 @@ switch (eventName) {
           domain: 'auto',
           path: '/',
           secure: true,
-          httpOnly: true,
+          httpOnly: false,
           'max-age': 31536000, // 1 year
         };
 
@@ -299,7 +312,7 @@ switch (eventName) {
   case PURCHASE_EVENT:
     const consentSignal = makeString(data.consentSignal || '');
     const consentDeclined = ['0', 'false'].indexOf(consentSignal) !== -1;
-    const awc = consentDeclined ? '' : getCookieValues('awin_awc')[0] || '';
+    const awc = consentDeclined ? '' : data.clickId || getCookieValues('awin_awc')[0] || '';
     const source = getCookieValues('awin_source')[0];
     let requestUrl =
       'https://www.awin1.com/sread.php?tt=ss&tv=2&merchant=' +

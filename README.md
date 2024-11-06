@@ -24,6 +24,8 @@ There are two types of events that Awin tag supports: PageView and Conversion.
 
 **Last Paid Click Referring Channel** - The value utilized to determine how AWIN should process the incoming transaction requests.
 
+**Awin Click ID** - optional, can be used to override click ID from cookie.
+
 **In test mode** - use to test the setup. Conversion in the test mode will be ignored.
 
 
