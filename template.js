@@ -19,10 +19,16 @@ const eventName = eventData.event_name;
 
 const PAGE_VIEW_EVENT = data.pageViewEvent || 'page_view';
 const PURCHASE_EVENT = data.purchaseEvent || 'purchase';
+const url = getEventData('page_location') || getRequestHeader('referer');
+
+
+if (url && url.lastIndexOf('https://gtm-msr.appspot.com/', 0) === 0) {
+  return data.gtmOnSuccess();
+}
 
 switch (eventName) {
   case PAGE_VIEW_EVENT:
-    const url = getEventData('page_location') || getRequestHeader('referer');
+    
 
     if (url) {
       const searchParams = parseUrl(url).searchParams;
