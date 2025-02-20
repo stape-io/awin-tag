@@ -126,8 +126,41 @@ ___TEMPLATE_PARAMETERS___
         "help": "By default we parse items in UA/GA4 format, if you want to override them please pass array of items in GA4 format"
       },
       {
+        "type": "CHECKBOX",
+        "name": "consentAutoDetection",
+        "checkboxText": "Automatically detect consent from Google Consent Mode or Stape\u0027s Data Tag",
+        "simpleValueType": true,
+        "subParams": [
+          {
+            "type": "SELECT",
+            "name": "consentAutoDetectionParameter",
+            "displayName": "The Google Consent Mode or the Stape\u0027s Data Tag parameter corresponding to the consent category to which the Awin cookies were allocated in your Consent Management Platform.",
+            "macrosInSelect": false,
+            "selectItems": [
+              {
+                "value": "analytics_storage",
+                "displayValue": "analytics_storage"
+              },
+              {
+                "value": "ad_storage",
+                "displayValue": "ad_storage"
+              }
+            ],
+            "simpleValueType": true,
+            "enablingConditions": [
+              {
+                "paramName": "consentAutoDetection",
+                "paramValue": true,
+                "type": "EQUALS"
+              }
+            ]
+          }
+        ],
+        "help": "If you are using Google Consent Mode or Stape\u0027s Data Tag to transmit consent to the server, then enable this setting to use the consent information from them.\n\u003cbr\u003e\nThis field has precedence over the \u003cb\u003eAwin Consent Signal\u003c/b\u003e."
+      },
+      {
         "type": "TEXT",
-        "name": "consentSignal",
+        "name": "awinConsentSignal",
         "displayName": "Awin Consent Signal",
         "simpleValueType": true,
         "valueValidators": [
@@ -138,7 +171,26 @@ ___TEMPLATE_PARAMETERS___
             ]
           }
         ],
-        "help": "Accepted values is: 0,1,true,false"
+        "help": "Accepted values are: 0,1,true,false.\n\u003cbr\u003eIf any other values are passed, or the field is left blank, the tag will assume \u003ci\u003etrue\u003c/i\u003e was specified.\n\u003cbr\u003e\nThe \u003cb\u003eautomatic consent detection checkbox\u003c/b\u003e, if marked, has precedence over the this field."
+      },
+      {
+        "type": "CHECKBOX",
+        "name": "enableCashbackTracking",
+        "checkboxText": "Enable Unconditional Cashback \u0026 Rewards Tracking",
+        "simpleValueType": true,
+        "help": "Enable this option to exempt Cashback and Rewards Journeys from consent restrictions.",
+        "enablingConditions": [
+          {
+            "paramName": "awinConsentSignal",
+            "paramValue": "",
+            "type": "PRESENT"
+          },
+          {
+            "paramName": "consentAutoDetection",
+            "paramValue": true,
+            "type": "EQUALS"
+          }
+        ]
       },
       {
         "type": "TEXT",
@@ -155,6 +207,35 @@ ___TEMPLATE_PARAMETERS___
         "help": "If checked, the tag will be fired in test mode and the reported conversion will be ignored."
       },
       {
+        "type": "CHECKBOX",
+        "name": "overrideCookieDomain",
+        "checkboxText": "Override the cookie domain",
+        "simpleValueType": true,
+        "subParams": [
+          {
+            "type": "TEXT",
+            "name": "overridenCookieDomain",
+            "displayName": "Cookie Domain",
+            "simpleValueType": true,
+            "enablingConditions": [
+              {
+                "paramName": "overrideCookieDomain",
+                "paramValue": true,
+                "type": "EQUALS"
+              }
+            ],
+            "help": "",
+            "valueValidators": [
+              {
+                "type": "NON_EMPTY"
+              }
+            ],
+            "valueHint": "example.com"
+          }
+        ],
+        "help": "Enable this option to override the cookie domain.\n\u003cbr\u003e\nEnter your website\u0027s top-level domain as a fixed value (e.g., example.com).\n\u003cbr\u003e\nIf left unchecked, the domain will be automatically determined using the following priority:\n\u003cul\u003e\n\u003cli\u003eDomain of the \u003ci\u003eForwarded\u003c/i\u003e header (if present).\u003c/li\u003e\n\u003cli\u003eDomain of the \u003ci\u003eX-Forwarded-Host\u003c/i\u003e header (if present).\u003c/li\u003e\n\u003cli\u003eDomain of the \u003ci\u003eHost\u003c/i\u003e header.\u003c/li\u003e\n\u003c/ul\u003e"
+      },
+      {
         "type": "GROUP",
         "name": "customParametersGroup",
         "displayName": "Custom Parameters",
@@ -166,12 +247,32 @@ ___TEMPLATE_PARAMETERS___
             "simpleTableColumns": [
               {
                 "defaultValue": "",
+                "displayName": "Parameter Key",
+                "name": "key",
+                "type": "TEXT",
+                "valueValidators": [
+                  {
+                    "type": "REGEX",
+                    "args": [
+                      "^(?![01]$)\\d+$"
+                    ],
+                    "errorMessage": "You must use any integer number equal to or greater than 2. Example: 2, 3, 4, 5, 6 etc.\u003cbr\u003eIf you have not previously entered the key, enter the numbers in the order in which the parameters appear from top to bottom, starting at 2."
+                  }
+                ],
+                "isUnique": true
+              },
+              {
+                "defaultValue": "",
                 "displayName": "Parameter Value",
                 "name": "value",
-                "type": "TEXT",
-                "valueValidators": []
+                "type": "TEXT"
               }
             ]
+          },
+          {
+            "type": "LABEL",
+            "name": "helpText",
+            "displayName": "For \u003ci\u003eParameter Key\u003c/i\u003e you must use any integer number equal to or greater than 2. Example: 2, 3, 4, 5, 6 etc.\u003cbr\u003eIf you have not previously entered this value, enter the numbers in the order in which the parameters appear from top to bottom, starting at 2."
           }
         ]
       }
@@ -263,8 +364,8 @@ const eventName = eventData.event_name;
 
 const PAGE_VIEW_EVENT = data.pageViewEvent || 'page_view';
 const PURCHASE_EVENT = data.purchaseEvent || 'purchase';
-const url = getEventData('page_location') || getRequestHeader('referer');
 
+const url = getEventData('page_location') || getRequestHeader('referer');
 
 if (url && url.lastIndexOf('https://gtm-msr.appspot.com/', 0) === 0) {
   return data.gtmOnSuccess();
@@ -272,60 +373,87 @@ if (url && url.lastIndexOf('https://gtm-msr.appspot.com/', 0) === 0) {
 
 switch (eventName) {
   case PAGE_VIEW_EVENT:
-    
-
     if (url) {
       const searchParams = parseUrl(url).searchParams;
-      const deduplicationParamName =
-        data.deduplicationQueryParameterName || 'source';
-      if (searchParams.awc) {
-        const options = {
-          domain: 'auto',
-          path: '/',
-          secure: true,
-          httpOnly: false,
-          'max-age': 31536000, // 1 year
-        };
-
-        setCookie('awin_awc', searchParams.awc, options, false);
-      }
-      if (searchParams[deduplicationParamName]) {
-        const options = {
-          domain: 'auto',
-          path: '/',
-          secure: true,
-          httpOnly: false,
-          'max-age': 31536000, // 1 year
-        };
-
-        setCookie(
-          'awin_source',
-          searchParams[deduplicationParamName],
-          options,
-          false
-        );
+      const isJourneyExemptFromConsent = 
+         !!searchParams.sn && searchParams.sn === '1' && data.enableCashbackTracking;
+      const deduplicationParamName = data.deduplicationQueryParameterName || 'source';
+      
+      if (isJourneyExemptFromConsent || !isConsentDeclined()) {
+        if (searchParams.awc || (searchParams.awaid && searchParams.gclid)) {
+          const awcCookieName = isJourneyExemptFromConsent ? 'awin_sn_awc' : 'awin_awc'; 
+          const awcCookieValue = searchParams.awc 
+            ? searchParams.awc 
+            : 'gclid_' + searchParams.awaid + '_' + searchParams.gclid;
+          
+          const options = {
+            domain: data.overridenCookieDomain || 'auto',
+            path: '/',
+            secure: true,
+            httpOnly: false,
+            'max-age': 31536000, // 1 year
+          };
+          
+          setCookie(awcCookieName, awcCookieValue, options, false);
+        }
+       
+        if (searchParams[deduplicationParamName]) {
+          const options = {
+            domain: data.overridenCookieDomain || 'auto',
+            path: '/',
+            secure: true,
+            httpOnly: false,
+            'max-age': 31536000, // 1 year
+          };
+          
+          setCookie(
+            'awin_source',
+            searchParams[deduplicationParamName],
+            options,
+            false
+          );
+        }
       }
     }
-
+    
     data.gtmOnSuccess();
     break;
   case PURCHASE_EVENT:
-    const consentSignal = makeString(data.consentSignal || '');
-    const consentDeclined = ['0', 'false'].indexOf(consentSignal) !== -1;
-    const awc = consentDeclined ? '' : data.clickId || getCookieValues('awin_awc')[0] || '';
-    const source = getCookieValues('awin_source')[0];
+    const commonCookie = eventData.common_cookie || {};
+    
+    let awc;
+    let source = data.channel || getCookieValues('awin_source')[0] || commonCookie.awin_source || 'aw';
+    
+    if (!isConsentDeclined()) {
+      const awcFromCookie = 
+        [getCookieValues('awin_awc')[0], getCookieValues('awin_sn_awc')[0]]
+        .filter(cookieValue => !!cookieValue)
+        .join(',');
+      const awcFromCommonCookie = 
+        [commonCookie.awin_awc, commonCookie.awin_sn_awc]
+        .filter(cookieValue => !!cookieValue)
+        .join(',');
+      awc = data.clickId || awcFromCookie || awcFromCommonCookie;
+    } else if (data.enableCashbackTracking) {
+      awc = data.clickId || getCookieValues('awin_sn_awc')[0] || commonCookie.awin_sn_awc || '';
+    } else {
+      // Do not read the cookies or use the template fields.
+      awc = '';
+      source = '';
+    }    
+    
+    const orderReference = data.orderReference || eventData.transaction_id;
     let requestUrl =
       'https://www.awin1.com/sread.php?tt=ss&tv=2&merchant=' +
       enc(data.advertiserId);
     requestUrl = requestUrl + '&amount=' + enc(data.totalAmount);
-    requestUrl = requestUrl + '&ch=' + enc(data.channel || source || 'aw');
+    requestUrl = requestUrl + '&ch=' + enc(source);
     requestUrl = requestUrl + '&vc=' + enc(data.voucherCode);
     requestUrl = requestUrl + '&cr=' + enc(data.currencyCode);
-    requestUrl = requestUrl + '&ref=' + enc(data.orderReference);
+    requestUrl = requestUrl + '&ref=' + enc(orderReference);
     requestUrl =
       requestUrl + '&customeracquisition=' + enc(data.customerAcquisition);
     requestUrl = requestUrl + '&testmode=' + (data.isTest ? 1 : 0);
-
     requestUrl = requestUrl + '&cks=' + enc(awc);
 
     /**
@@ -346,27 +474,36 @@ switch (eventName) {
     /**
      * Custom Parameters
      */
-    const customParameters = ['gtm_s2s_stape'];
+    const customParameters = [ { key: '1', value: 'gtm_s2s_stape_' + getContainerVersion().containerId } ];
     const allowedTypesForCustomParameters = ['string', 'number', 'boolean'];
     if (getType(data.customParameters) === 'array') {
-      data.customParameters.forEach((customParameter) => {
-        customParameters.push(customParameter.value);
+      data.customParameters.forEach((customParameter, index) => {
+        customParameters.push({ 
+          // If user hasn't added the key because of the breaking change when the column was added, 
+          // we assign it on their behalf based on the order of the parameters.
+          // "key" must start at 1, and 1 is always the "gtm_s2s_stape_<Container ID>" param. So, we add 2 to the index.
+          key: customParameter.key ? customParameter.key : (index + 2), 
+          value: customParameter.value 
+        });
       });
     }
-    customParameters.forEach((customParameter, index) => {
+    customParameters.forEach((customParameter) => {
       if (
-        allowedTypesForCustomParameters.indexOf(getType(customParameter)) !== -1
+        allowedTypesForCustomParameters.indexOf(getType(customParameter.value)) !== -1
       ) {
-        requestUrl = requestUrl + '&p' + (index + 1) + '=' + customParameter;
+        requestUrl = requestUrl + '&p' + customParameter.key + '=' + enc(customParameter.value);
       }
     });
 
     /**
      * Product Level Tracking
      */
-    const items = data.productsOverride || eventData.items || [];
+    let items = data.productsOverride || eventData.items || [];
+    if (getType(items) === 'string') items = JSON.parse(items);
+    
     const productRow =
       'AW:P|{{advertiserId}}|{{orderReference}}|{{productId}}|{{productName}}|{{productItemPrice}}|{{productQuantity}}|{{productSku}}|{{commissionGroupCode}}|{{productCategory}}';
+    
     if (getType(items) === 'array') {
       items.forEach((item, index) => {
         let value = productRow.replace(
@@ -375,10 +512,13 @@ switch (eventName) {
         );
         value = value.replace(
           '{{orderReference}}',
-          enc(item.order_reference || eventData.transaction_id || '')
+          enc(orderReference || item.order_reference || '')
         );
         value = value.replace('{{productId}}', enc(item.item_id || ''));
-        value = value.replace('{{productName}}', enc(item.item_name || ''));
+        value = value.replace(
+          '{{productName}}',
+          enc(replacePipeWithUnderscore(item.item_name))
+        );
         value = value.replace(
           '{{productItemPrice}}',
           getPriceString(item.price)
@@ -394,7 +534,7 @@ switch (eventName) {
         );
         value = value.replace(
           '{{productCategory}}',
-          enc(item.item_category || '')
+          enc(replacePipeWithUnderscore(item.item_category))
         );
         requestUrl = requestUrl + '&bd[' + index + ']=' + value;
       });
@@ -442,6 +582,32 @@ switch (eventName) {
   default:
     data.gtmOnSuccess();
     break;
+}
+
+function isConsentDeclined() {
+  const autoConsentParameter = data.consentAutoDetectionParameter;
+  if (autoConsentParameter) {
+    // Check consent state from Stape's Data Tag
+    if (eventData.consent_state && eventData.consent_state[autoConsentParameter] === false) {
+      return true;
+    }
+      
+    // Check consent state from Google Consent Mode
+    const gcsPositionMapping = { analytics_storage: 3, ad_storage: 2 };
+    const xGaGcs = eventData['x-ga-gcs'] || ''; // x-ga-gcs is a string like "G110"
+    if (xGaGcs[gcsPositionMapping[autoConsentParameter]] === '0') {
+      return true;
+    }
+  }
+  
+  // Check template field specific consent signal
+  const awinConsentSignal = makeString(data.awinConsentSignal || '');
+  return ['0', 'false'].indexOf(awinConsentSignal) !== -1;
+}
+
+function replacePipeWithUnderscore(data) {
+  data = data || '';
+  return data.split('|').join('_');
 }
 
 function enc(data) {
@@ -640,6 +806,53 @@ ___SERVER_PERMISSIONS___
                     "string": "any"
                   }
                 ]
+              },
+              {
+                "type": 3,
+                "mapKey": [
+                  {
+                    "type": 1,
+                    "string": "name"
+                  },
+                  {
+                    "type": 1,
+                    "string": "domain"
+                  },
+                  {
+                    "type": 1,
+                    "string": "path"
+                  },
+                  {
+                    "type": 1,
+                    "string": "secure"
+                  },
+                  {
+                    "type": 1,
+                    "string": "session"
+                  }
+                ],
+                "mapValue": [
+                  {
+                    "type": 1,
+                    "string": "awin_sn_awc"
+                  },
+                  {
+                    "type": 1,
+                    "string": "*"
+                  },
+                  {
+                    "type": 1,
+                    "string": "*"
+                  },
+                  {
+                    "type": 1,
+                    "string": "any"
+                  },
+                  {
+                    "type": 1,
+                    "string": "any"
+                  }
+                ]
               }
             ]
           }
@@ -719,6 +932,10 @@ ___SERVER_PERMISSIONS___
               {
                 "type": 1,
                 "string": "awin_source"
+              },
+              {
+                "type": 1,
+                "string": "awin_sn_awc"
               }
             ]
           }
@@ -767,25 +984,159 @@ ___SERVER_PERMISSIONS___
 ___TESTS___
 
 scenarios:
-- name: Test custom parameters
-  code: |2-
-
-    const logToConsole = require('logToConsole');
-
+- name: Override cookie domain
+  code: |-
     const mockData = {
-      'type': 'purchase',
-      'customParameters': [
-        {value: 'custom_param'},
-      ],
+      overridenCookieDomain: 'example.com'
     };
 
+    const page_location = 'https://example.com/?awc=awc123';
+
+    mock('getAllEventData', {
+      event_name: 'page_view',
+      page_location: page_location
+    });
+
+    mock('getEventData', (key) => {
+      if (key === 'page_location') return page_location;
+    });
+
+    mock('setCookie', (cookieName, cookieValue, cookieSettings) => {
+      if (['awin_source', 'awin_sn_awc', 'awin_awc'].indexOf(cookieName) === -1) fail('incorrect cookie name');
+      else if (cookieSettings.domain !== mockData.overridenCookieDomain) fail('incorrect cookie domain');
+    });
+
+    // Call runCode to run the template's code.
+    runCode(mockData);
+
+    // Verify that the tag finished successfully.
+    assertApi('gtmOnSuccess').wasCalled();
+- name: Improving PLT (product level tracking) data > Using the user defined PLT object
+  code: "const testFlag = '#PRODUCT_OVERRIDE_TEST#';\nconst productsOverride = testFlag\
+    \ + '[{\"item_id\":\"SKU_12345\",\"item_name\":\"Stan and Friends Tee | aijsdiasjdijas\
+    \ | aisjdiajsd piee |||| kajsdkajsd ||aasd\",\"affiliation\":\"Google Merchandise\
+    \ Store\",\"coupon\":\"SUMMER_FUN\",\"discount\":2.22,\"index\":0,\"item_brand\"\
+    :\"Google\",\"item_category\":\"Apparel|iajsdiajsd|oasodiasd\",\"item_list_id\"\
+    :\"related_products\",\"item_list_name\":\"Related Products\",\"item_variant\"\
+    :\"green\",\"location_id\":\"ChIJIQBpAG2ahYAR_6128GcTUEo\",\"price\":10.01,\"\
+    quantity\":3}]';\n\nconst mockData = {\n  advertiserId: '123123',\n  orderReference:\
+    \ 'orderRef123',\n  productsOverride: productsOverride\n};\n\nconst JSON = require('JSON');\n\
+    mockObject('JSON', {\n  parse: (string) => {\n    if (string.indexOf(testFlag)\
+    \ === 0) {\n      assertThat(string).isEqualTo(productsOverride);\n      return\
+    \ JSON.parse(string.substring(testFlag.length));\n    }\n    return JSON.parse(string);\n\
+    \  },\n  stringify: (entity) => JSON.stringify(entity) \n});\n\nmock('getAllEventData',\
+    \ {\n  event_name: 'purchase',\n  transaction_id: 'orderid123'\n});\n\nrunCode(mockData);"
+- name: PLT (product level tracking) data > Order ref handling
+  code: "const mockData = {\n  advertiserId: '123123',\n  orderReference: 'orderRef123'\n\
+    };\n\nmock('getAllEventData', {\n  event_name: 'purchase',\n  transaction_id:\
+    \ 'orderid123',\n  items: [{\"item_id\":\"SKU_12345\",\"item_name\":\"Stan and\
+    \ Friends Tee | aijsdiasjdijas | aisjdiajsd piee |||| kajsdkajsd ||aasd\",\"affiliation\"\
+    :\"Google Merchandise Store\",\"coupon\":\"SUMMER_FUN\",\"discount\":2.22,\"index\"\
+    :0,\"item_brand\":\"Google\",\"item_category\":\"Apparel|iajsdiajsd|oasodiasd\"\
+    ,\"item_list_id\":\"related_products\",\"item_list_name\":\"Related Products\"\
+    ,\"item_variant\":\"green\",\"location_id\":\"ChIJIQBpAG2ahYAR_6128GcTUEo\",\"\
+    price\":10.01,\"quantity\":3}]\n});\n\nmock('sendHttpRequest', function(url, onSuccess,\
+    \ onFailure) {\n  logToConsole(url);\n  assertThat(url).contains('ref=' + mockData.orderReference);\
+    \ \n  assertThat(url).contains('&bd[0]=AW:P|123123|' + mockData.orderReference\
+    \ + '|SKU_12345|Stan%20and%20Friends%20Tee%20_%20aijsdiasjdijas%20_%20aisjdiajsd%20piee%20____%20kajsdkajsd%20__aasd');\n\
+    });\n\nrunCode(mockData);"
+- name: PLT (product level tracking) data > Replace pipe value with an underscore
+  code: |-
+    const mockData = {
+      advertiserId: '123123'
+    };
+
+    mock('getAllEventData', {
+      event_name: 'purchase',
+      transaction_id: 'orderid123',
+      items: [{"item_id":"SKU_12345","item_name":"Stan and Friends Tee | aijsdiasjdijas | aisjdiajsd piee |||| kajsdkajsd ||aasd","affiliation":"Google Merchandise Store","coupon":"SUMMER_FUN","discount":2.22,"index":0,"item_brand":"Google","item_category":"Apparel|iajsdiajsd|oasodiasd","item_list_id":"related_products","item_list_name":"Related Products","item_variant":"green","location_id":"ChIJIQBpAG2ahYAR_6128GcTUEo","price":10.01,"quantity":3}]
+    });
+
     mock('sendHttpRequest', function(url, onSuccess, onFailure) {
-        logToConsole(url);
-      assertThat(url).contains('p1=gtm_s2s_stape');
-      assertThat(url).contains('p2=custom_param');
+      logToConsole(url);
+      assertThat(url).contains('bd[0]=AW:P|123123|orderid123|SKU_12345|Stan%20and%20Friends%20Tee%20_%20aijsdiasjdijas%20_%20aisjdiajsd%20piee%20____%20kajsdkajsd%20__aasd|10.01|3|SKU_12345|DEFAULT|Apparel_iajsdiajsd_oasodiasd');
     });
 
     runCode(mockData);
+- name: Custom Parameters > Send the GTM container ID in custom parameter 1
+  code: |-
+    const mockData = {
+      'customParameters': [
+        {value: 'custom_param'},
+        {key: '3', value: 'custom_param2'},
+        {key: '8', value: 'custom_param3'},
+      ],
+    };
+
+    mock('getAllEventData', {
+      event_name: 'purchase'
+    });
+
+    const containerId = 'GTM-123123';
+    mock('getContainerVersion', {
+      containerId: containerId
+    });
+
+    mock('sendHttpRequest', function(url, onSuccess, onFailure) {
+      logToConsole(url);
+      assertThat(url).contains('p1=gtm_s2s_stape_' + containerId);
+    });
+
+    runCode(mockData);
+- name: Custom Parameters > Allow the configuration to input the Key and Value for
+    custom parameters (without keys)
+  code: |-
+    const mockData = {
+      'customParameters': [
+        {value: 'custom_param'},
+        {value: 'custom_param2'},
+        {value: 'custom_param3'},
+      ],
+    };
+
+    mock('getAllEventData', {
+      event_name: 'purchase'
+    });
+
+
+    mock('sendHttpRequest', function(url, onSuccess, onFailure) {
+      logToConsole(url);
+      assertThat(url).contains('p1=gtm_s2s_stape_');
+      assertThat(url).contains('p2=custom_param');
+      assertThat(url).contains('p3=custom_param2');
+      assertThat(url).contains('p4=custom_param3');
+    });
+
+    runCode(mockData);
+- name: Custom Parameters > Allow the configuration to input the Key and Value for
+    custom parameters (with keys)
+  code: |-
+    const mockData = {
+      'customParameters': [
+        {key: '3', value: 'custom_param'},
+        {key: '87', value: 'custom_param2'},
+        {key: '1098', value: 'custom_param3'},
+        {key: '999', value: ''},
+        {key: '888', value: '2345]667~ 6&+-=?sdãoçl'}
+      ],
+    };
+
+    mock('getAllEventData', {
+      event_name: 'purchase'
+    });
+
+    mock('sendHttpRequest', function(url, onSuccess, onFailure) {
+      logToConsole(url);
+      assertThat(url).contains('p1=gtm_s2s_stape_');
+      assertThat(url).contains('p3=custom_param');
+      assertThat(url).contains('p87=custom_param2');
+      assertThat(url).contains('p1098=custom_param3');
+      assertThat(url).contains('p999=&');
+      assertThat(url).contains('p888=2345%5D667~%206%26%2B-%3D%3Fsd%C3%A3o%C3%A7l');
+    });
+
+    runCode(mockData);
+setup: const logToConsole = require('logToConsole');
 
 
 ___NOTES___
