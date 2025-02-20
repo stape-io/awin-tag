@@ -156,7 +156,7 @@ ___TEMPLATE_PARAMETERS___
             ]
           }
         ],
-        "help": "If you are using Google Consent Mode or Stape\u0027s Data Tag to transmit consent to the server, then enable this setting to use the consent information from them.\n\u003cbr\u003e\nThis field has precedence over the \u003cb\u003eAwin Consent Signal\u003c/b\u003e."
+        "help": "If you are using Google Consent Mode or Stape\u0027s Data Tag to transmit consent to the server, then enable this setting to use the consent information from them.\n\u003cbr\u003e\nThis field has precedence over the \u003cb\u003eAwin Consent Signal\u003c/b\u003e.\n\u003cbr\u003e\nAny conflicting values between these fields will result in denied consent."
       },
       {
         "type": "TEXT",
@@ -171,7 +171,7 @@ ___TEMPLATE_PARAMETERS___
             ]
           }
         ],
-        "help": "Accepted values are: 0,1,true,false.\n\u003cbr\u003eIf any other values are passed, or the field is left blank, the tag will assume \u003ci\u003etrue\u003c/i\u003e was specified.\n\u003cbr\u003e\nThe \u003cb\u003eautomatic consent detection checkbox\u003c/b\u003e, if marked, has precedence over the this field."
+        "help": "Accepted values are: 0,1,true,false.\n\u003cbr\u003e\nIf any other values are passed, or the field is left blank, the tag will assume \u003ci\u003etrue\u003c/i\u003e was specified.\n\u003cbr\u003e\nThe \u003cb\u003eautomatic consent detection checkbox\u003c/b\u003e, if marked, has precedence over the this field.\n\u003cbr\u003e\nAny conflicting values between these fields will result in denied consent."
       },
       {
         "type": "CHECKBOX",
@@ -1011,7 +1011,7 @@ scenarios:
 
     // Verify that the tag finished successfully.
     assertApi('gtmOnSuccess').wasCalled();
-- name: Improving PLT (product level tracking) data > Using the user defined PLT object
+- name: PLT (product level tracking) data > Using the user defined PLT object
   code: "const testFlag = '#PRODUCT_OVERRIDE_TEST#';\nconst productsOverride = testFlag\
     \ + '[{\"item_id\":\"SKU_12345\",\"item_name\":\"Stan and Friends Tee | aijsdiasjdijas\
     \ | aisjdiajsd piee |||| kajsdkajsd ||aasd\",\"affiliation\":\"Google Merchandise\
