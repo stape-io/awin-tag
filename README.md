@@ -2,15 +2,15 @@
 
 There are two types of events that Awin tag supports: PageView and Conversion. 
 
-- **PageView event** stores the awc URL parameter inside the awin_awc cookie. 
+- **PageView event** stores the `awc` URL parameter inside the `awin_awc` or `awin_sn_awc` cookie, and the source (usually, the `utm_source` value) inside the `awin_source` cookie. 
 - **Conversion event** sends the HTTP request with the specified conversion data to Awin.
 
 ## How to use the Awin tag:
 
-1. Create an Awin tag and add Page View and Purchase triggers
+1. Create an Awin tag and add Page View and Purchase triggers.
 2. Add the only required field for the conversion event - Merchant ID, other fields are optional.
 
-**Merchant ID** - advertiser program ID
+**Merchant ID** - advertiser program ID.
 
 **Order Reference** - booking or transaction ID.
 
