@@ -1,5 +1,7 @@
 homepage: 'https://stape.io/'
 versions:
+  - sha: 36c09751c354293319649ab03cc4ff36886ce2c2
+    changeNotes: Improved consent framework, improved PLT tracking, improved custom parameters handling, added cookie domain override, added some tests.
   - sha: 80a94cf14d27ea976655f46e25c45a598afde6c8
     changeNotes: Added Awin click ID override option, fixed cookie http_only, fixed gtm-msr.appspot.com requests.
   - sha: d193e263ffb75a68110db19499da45af23797c1d
