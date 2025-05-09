@@ -45,7 +45,7 @@ switch (eventName) {
             domain: data.overridenCookieDomain || 'auto',
             path: '/',
             secure: true,
-            httpOnly: false,
+            httpOnly: true,
             'max-age': 31536000, // 1 year
           };
           
@@ -57,7 +57,7 @@ switch (eventName) {
             domain: data.overridenCookieDomain || 'auto',
             path: '/',
             secure: true,
-            httpOnly: false,
+            httpOnly: true,
             'max-age': 31536000, // 1 year
           };
           
