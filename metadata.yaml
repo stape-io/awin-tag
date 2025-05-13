@@ -1,5 +1,7 @@
 homepage: 'https://stape.io/'
 versions:
+  - sha: 872dbfcfc4348f6c4cf45b945a0e9f10e4b6708a
+    changeNotes: Added HttpOnly flag option to cookies.
   - sha: 36c09751c354293319649ab03cc4ff36886ce2c2
     changeNotes: Improved consent framework, improved PLT tracking, improved custom parameters handling, added cookie domain override, added some tests.
   - sha: 80a94cf14d27ea976655f46e25c45a598afde6c8
