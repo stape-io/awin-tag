@@ -40,6 +40,10 @@ There are two types of events that Awin tag supports: PageView and Conversion.
 
 **Override the cookie domain** - optional, can be used to override the default domain where cookies are set.
 
+**Override the cookie SameSite attribute** - optional, can be used to override the SameSite attribute used by cookies (by default, no SameSite attribute is set).
+
+**Use HttpOnly cookies** - optional, can be used to use HttpOnly cookies (not accessible via JavaScript).
+
 
 ### Useful links:
 
