@@ -12,7 +12,8 @@ const getContainerVersion = require('getContainerVersion');
 const getType = require('getType');
 const makeString = require('makeString');
 
-/**********************************************************************************************/
+/*==============================================================================
+==============================================================================*/
 
 const isLoggingEnabled = determinateIsLoggingEnabled();
 const traceId = getRequestHeader('trace-id');
@@ -28,8 +29,9 @@ if (url && url.lastIndexOf('https://gtm-msr.appspot.com/', 0) === 0) {
   return data.gtmOnSuccess();
 }
 
-/**********************************************************************************************/
-// Vendor related functions
+/*==============================================================================
+  Vendor related functions
+==============================================================================*/
 
 switch (eventName) {
   case PAGE_VIEW_EVENT:
@@ -40,35 +42,25 @@ switch (eventName) {
       const deduplicationParamName = data.deduplicationQueryParameterName || 'source';
 
       if (isJourneyExemptFromConsent || !isConsentDeclined()) {
+        const cookieOptions = {
+          domain: data.overridenCookieDomain || 'auto',
+          path: '/',
+          secure: true,
+          httpOnly: !!data.useHttpOnlyCookie,
+          'max-age': 31536000 // 1 year
+        };
+        if (data.overridenCookieSameSite) cookieOptions.samesite = data.overridenCookieSameSite;
+
         if (searchParams.awc || (searchParams.awaid && searchParams.gclid)) {
           const awcCookieName = isJourneyExemptFromConsent ? 'awin_sn_awc' : 'awin_awc';
           const awcCookieValue = searchParams.awc
             ? searchParams.awc
             : 'gclid_' + searchParams.awaid + '_' + searchParams.gclid;
-
-          const options = {
-            domain: data.overridenCookieDomain || 'auto',
-            path: '/',
-            samesite: 'none',
-            secure: true,
-            httpOnly: !!data.useHttpOnlyCookie,
-            'max-age': 31536000 // 1 year
-          };
-
-          setCookie(awcCookieName, awcCookieValue, options, false);
+          setCookie(awcCookieName, awcCookieValue, cookieOptions, false);
         }
 
         if (searchParams[deduplicationParamName]) {
-          const options = {
-            domain: data.overridenCookieDomain || 'auto',
-            path: '/',
-            samesite: 'none',
-            secure: true,
-            httpOnly: !!data.useHttpOnlyCookie,
-            'max-age': 31536000 // 1 year
-          };
-
-          setCookie('awin_source', searchParams[deduplicationParamName], options, false);
+          setCookie('awin_source', searchParams[deduplicationParamName], cookieOptions, false);
         }
       }
     }
@@ -223,8 +215,9 @@ switch (eventName) {
     break;
 }
 
-/**********************************************************************************************/
-// Helpers
+/*==============================================================================
+  Helpers
+==============================================================================*/
 
 function isConsentDeclined() {
   const autoConsentParameter = data.consentAutoDetectionParameter;
@@ -253,7 +246,7 @@ function replacePipeWithUnderscore(data) {
 }
 
 function enc(data) {
-  return encodeUriComponent((data = data || ''));
+  return encodeUriComponent(data || '');
 }
 
 function getPriceString(price) {
