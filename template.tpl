@@ -14,6 +14,11 @@ ___INFO___
   "version": 1,
   "securityGroups": [],
   "displayName": "Awin",
+  "categories": [
+    "ADVERTISING",
+    "MARKETING",
+    "CONVERSIONS"
+  ],
   "brand": {
     "id": "github.com_stape-io",
     "displayName": "stape-io",
@@ -237,6 +242,44 @@ ___TEMPLATE_PARAMETERS___
       },
       {
         "type": "CHECKBOX",
+        "name": "overrideCookieSameSite",
+        "checkboxText": "Override the cookie SameSite attribute",
+        "simpleValueType": true,
+        "subParams": [
+          {
+            "type": "SELECT",
+            "name": "overridenCookieSameSite",
+            "displayName": "Cookie SameSite Attribute",
+            "macrosInSelect": true,
+            "selectItems": [
+              {
+                "value": "lax",
+                "displayValue": "Lax"
+              },
+              {
+                "value": "none",
+                "displayValue": "None"
+              },
+              {
+                "value": "strict",
+                "displayValue": "Strict"
+              }
+            ],
+            "simpleValueType": true,
+            "defaultValue": "lax",
+            "enablingConditions": [
+              {
+                "paramName": "overrideCookieSameSite",
+                "paramValue": true,
+                "type": "EQUALS"
+              }
+            ]
+          }
+        ],
+        "help": "By default, cookies are not set with the \u003ci\u003eSameSite\u003c/i\u003e attribute. Different browsers treat cookies without \u003ci\u003eSameSite\u003c/i\u003e as \"Lax\" or \"None\".\n\u003cbr/\u003e\n\u003ca href\u003d\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie#samesitesamesite-value\"\u003eLearn more\u003c/a\u003e."
+      },
+      {
+        "type": "CHECKBOX",
         "name": "useHttpOnlyCookie",
         "checkboxText": "Use HttpOnly cookies",
         "simpleValueType": true,
@@ -364,7 +407,8 @@ const getContainerVersion = require('getContainerVersion');
 const getType = require('getType');
 const makeString = require('makeString');
 
-/**********************************************************************************************/
+/*==============================================================================
+==============================================================================*/
 
 const isLoggingEnabled = determinateIsLoggingEnabled();
 const traceId = getRequestHeader('trace-id');
@@ -380,8 +424,9 @@ if (url && url.lastIndexOf('https://gtm-msr.appspot.com/', 0) === 0) {
   return data.gtmOnSuccess();
 }
 
-/**********************************************************************************************/
-// Vendor related functions
+/*==============================================================================
+  Vendor related functions
+==============================================================================*/
 
 switch (eventName) {
   case PAGE_VIEW_EVENT:
@@ -392,33 +437,25 @@ switch (eventName) {
       const deduplicationParamName = data.deduplicationQueryParameterName || 'source';
 
       if (isJourneyExemptFromConsent || !isConsentDeclined()) {
+        const cookieOptions = {
+          domain: data.overridenCookieDomain || 'auto',
+          path: '/',
+          secure: true,
+          httpOnly: !!data.useHttpOnlyCookie,
+          'max-age': 31536000 // 1 year
+        };
+        if (data.overridenCookieSameSite) cookieOptions.samesite = data.overridenCookieSameSite;
+
         if (searchParams.awc || (searchParams.awaid && searchParams.gclid)) {
           const awcCookieName = isJourneyExemptFromConsent ? 'awin_sn_awc' : 'awin_awc';
           const awcCookieValue = searchParams.awc
             ? searchParams.awc
             : 'gclid_' + searchParams.awaid + '_' + searchParams.gclid;
-
-          const options = {
-            domain: data.overridenCookieDomain || 'auto',
-            path: '/',
-            secure: true,
-            httpOnly: !!data.useHttpOnlyCookie,
-            'max-age': 31536000 // 1 year
-          };
-
-          setCookie(awcCookieName, awcCookieValue, options, false);
+          setCookie(awcCookieName, awcCookieValue, cookieOptions, false);
         }
 
         if (searchParams[deduplicationParamName]) {
-          const options = {
-            domain: data.overridenCookieDomain || 'auto',
-            path: '/',
-            secure: true,
-            httpOnly: !!data.useHttpOnlyCookie,
-            'max-age': 31536000 // 1 year
-          };
-
-          setCookie('awin_source', searchParams[deduplicationParamName], options, false);
+          setCookie('awin_source', searchParams[deduplicationParamName], cookieOptions, false);
         }
       }
     }
@@ -573,8 +610,9 @@ switch (eventName) {
     break;
 }
 
-/**********************************************************************************************/
-// Helpers
+/*==============================================================================
+  Helpers
+==============================================================================*/
 
 function isConsentDeclined() {
   const autoConsentParameter = data.consentAutoDetectionParameter;
@@ -603,7 +641,7 @@ function replacePipeWithUnderscore(data) {
 }
 
 function enc(data) {
-  return encodeUriComponent((data = data || ''));
+  return encodeUriComponent(data || '');
 }
 
 function getPriceString(price) {
@@ -993,8 +1031,7 @@ scenarios:
     });
 
     mock('setCookie', (cookieName, cookieValue, cookieSettings) => {
-      if (['awin_source', 'awin_sn_awc', 'awin_awc'].indexOf(cookieName) === -1) fail('incorrect cookie name');
-      else if (cookieSettings.domain !== mockData.overridenCookieDomain) fail('incorrect cookie domain');
+      if (cookieSettings.domain !== mockData.overridenCookieDomain) fail('incorrect cookie domain');
     });
 
     runCode(mockData);
@@ -1047,6 +1084,30 @@ scenarios:
     mock('setCookie', (cookieName, cookieValue, cookieSettings) => {
       if (['awin_source', 'awin_sn_awc', 'awin_awc'].indexOf(cookieName) === -1) fail('incorrect cookie name');
       else if (cookieSettings.httpOnly !== true) fail('incorrect cookie http only flag');
+    });
+
+    runCode(mockData);
+
+    assertApi('gtmOnSuccess').wasCalled();
+- name: Override cookie SameSite attribute
+  code: |-
+    const mockData = {
+      overridenCookieSameSite: 'none'
+    };
+
+    const page_location = 'https://example.com/?awc=awc123';
+
+    mock('getAllEventData', {
+      event_name: 'page_view',
+      page_location: page_location
+    });
+
+    mock('getEventData', (key) => {
+      if (key === 'page_location') return page_location;
+    });
+
+    mock('setCookie', (cookieName, cookieValue, cookieSettings) => {
+      if (cookieSettings.samesite !== mockData.overridenCookieSameSite) fail('incorrect cookie same site');
     });
 
     runCode(mockData);
