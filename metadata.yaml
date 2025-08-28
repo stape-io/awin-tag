@@ -1,5 +1,8 @@
 homepage: 'https://stape.io/'
+documentation: 'https://github.com/stape-io/awin-tag'
 versions:
+  - sha: db2b4f72eeb8bb4651eeee1fed48ece125f519dc
+    changeNotes: Added SameSite attribute option to cookies.
   - sha: 872dbfcfc4348f6c4cf45b945a0e9f10e4b6708a
     changeNotes: Added HttpOnly flag option to cookies.
   - sha: 36c09751c354293319649ab03cc4ff36886ce2c2
