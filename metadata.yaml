@@ -1,6 +1,8 @@
 homepage: 'https://stape.io/'
 documentation: 'https://github.com/stape-io/awin-tag'
 versions:
+  - sha: 1f87d9a548a5c4bdac3a56ed760b9874aff2f728
+    changeNotes: Added Consent Settings section.
   - sha: db2b4f72eeb8bb4651eeee1fed48ece125f519dc
     changeNotes: Added SameSite attribute option to cookies.
   - sha: 872dbfcfc4348f6c4cf45b945a0e9f10e4b6708a
