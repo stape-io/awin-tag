@@ -16,11 +16,12 @@ const setCookie = require('setCookie');
 ==============================================================================*/
 
 const eventData = getAllEventData();
-const url = getEventData('page_location') || getRequestHeader('referer');
 
 if (!isConsentGivenOrNotRequired(data, eventData)) {
   return data.gtmOnSuccess();
 }
+
+const url = getEventData('page_location') || getRequestHeader('referer');
 
 if (url && url.lastIndexOf('https://gtm-msr.appspot.com/', 0) === 0) {
   return data.gtmOnSuccess();

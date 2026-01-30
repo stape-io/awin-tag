@@ -436,11 +436,12 @@ const setCookie = require('setCookie');
 ==============================================================================*/
 
 const eventData = getAllEventData();
-const url = getEventData('page_location') || getRequestHeader('referer');
 
 if (!isConsentGivenOrNotRequired(data, eventData)) {
   return data.gtmOnSuccess();
 }
+
+const url = getEventData('page_location') || getRequestHeader('referer');
 
 if (url && url.lastIndexOf('https://gtm-msr.appspot.com/', 0) === 0) {
   return data.gtmOnSuccess();
@@ -450,11 +451,11 @@ if (url && url.lastIndexOf('https://gtm-msr.appspot.com/', 0) === 0) {
   Vendor related functions
 ==============================================================================*/
 
-const eventName = eventData.event_name;
 const isLoggingEnabled = determinateIsLoggingEnabled();
+const traceId = getRequestHeader('trace-id');
+const eventName = eventData.event_name;
 const PAGE_VIEW_EVENT = data.pageViewEvent || 'page_view';
 const PURCHASE_EVENT = data.purchaseEvent || 'purchase';
-const traceId = getRequestHeader('trace-id');
 
 switch (eventName) {
   case PAGE_VIEW_EVENT:
