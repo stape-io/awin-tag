@@ -362,6 +362,31 @@ ___TEMPLATE_PARAMETERS___
   },
   {
     "type": "GROUP",
+    "name": "tagExecutionConsentSettingsGroup",
+    "displayName": "Tag Execution Consent Settings",
+    "groupStyle": "ZIPPY_CLOSED",
+    "subParams": [
+      {
+        "type": "RADIO",
+        "name": "adStorageConsent",
+        "radioItems": [
+          {
+            "value": "optional",
+            "displayValue": "Send data always"
+          },
+          {
+            "value": "required",
+            "displayValue": "Send data in case marketing consent given",
+            "help": "Aborts the tag execution if marketing consent (\u003ci\u003ead_storage\u003c/i\u003e Google Consent Mode or Stape\u0027s Data Tag parameter) is not given."
+          }
+        ],
+        "simpleValueType": true,
+        "defaultValue": "optional"
+      }
+    ]
+  },
+  {
+    "type": "GROUP",
     "name": "logsGroup",
     "displayName": "Logs Settings",
     "groupStyle": "ZIPPY_CLOSED",
@@ -393,30 +418,28 @@ ___TEMPLATE_PARAMETERS___
 
 ___SANDBOXED_JS_FOR_SERVER___
 
-const sendHttpRequest = require('sendHttpRequest');
-const setCookie = require('setCookie');
-const parseUrl = require('parseUrl');
-const JSON = require('JSON');
-const getRequestHeader = require('getRequestHeader');
 const encodeUriComponent = require('encodeUriComponent');
+const getAllEventData = require('getAllEventData');
+const getContainerVersion = require('getContainerVersion');
 const getCookieValues = require('getCookieValues');
 const getEventData = require('getEventData');
-const getAllEventData = require('getAllEventData');
-const logToConsole = require('logToConsole');
-const getContainerVersion = require('getContainerVersion');
+const getRequestHeader = require('getRequestHeader');
 const getType = require('getType');
+const JSON = require('JSON');
+const logToConsole = require('logToConsole');
 const makeString = require('makeString');
+const parseUrl = require('parseUrl');
+const sendHttpRequest = require('sendHttpRequest');
+const setCookie = require('setCookie');
 
 /*==============================================================================
 ==============================================================================*/
 
-const isLoggingEnabled = determinateIsLoggingEnabled();
-const traceId = getRequestHeader('trace-id');
 const eventData = getAllEventData();
-const eventName = eventData.event_name;
 
-const PAGE_VIEW_EVENT = data.pageViewEvent || 'page_view';
-const PURCHASE_EVENT = data.purchaseEvent || 'purchase';
+if (!isConsentGivenOrNotRequired(data, eventData)) {
+  return data.gtmOnSuccess();
+}
 
 const url = getEventData('page_location') || getRequestHeader('referer');
 
@@ -428,6 +451,12 @@ if (url && url.lastIndexOf('https://gtm-msr.appspot.com/', 0) === 0) {
   Vendor related functions
 ==============================================================================*/
 
+const isLoggingEnabled = determinateIsLoggingEnabled();
+const traceId = getRequestHeader('trace-id');
+const eventName = eventData.event_name;
+const PAGE_VIEW_EVENT = data.pageViewEvent || 'page_view';
+const PURCHASE_EVENT = data.purchaseEvent || 'purchase';
+
 switch (eventName) {
   case PAGE_VIEW_EVENT:
     if (url) {
@@ -436,7 +465,7 @@ switch (eventName) {
         !!searchParams.sn && searchParams.sn === '1' && data.enableCashbackTracking;
       const deduplicationParamName = data.deduplicationQueryParameterName || 'source';
 
-      if (isJourneyExemptFromConsent || !isConsentDeclined()) {
+      if (isJourneyExemptFromConsent || !isAwinCookieStorageConsentDeclined()) {
         const cookieOptions = {
           domain: data.overridenCookieDomain || 'auto',
           path: '/',
@@ -469,7 +498,7 @@ switch (eventName) {
     let source =
       data.channel || getCookieValues('awin_source')[0] || commonCookie.awin_source || 'aw';
 
-    if (!isConsentDeclined()) {
+    if (!isAwinCookieStorageConsentDeclined()) {
       const awcFromCookie = [getCookieValues('awin_awc')[0], getCookieValues('awin_sn_awc')[0]]
         .filter((cookieValue) => !!cookieValue)
         .join(',');
@@ -614,7 +643,7 @@ switch (eventName) {
   Helpers
 ==============================================================================*/
 
-function isConsentDeclined() {
+function isAwinCookieStorageConsentDeclined() {
   const autoConsentParameter = data.consentAutoDetectionParameter;
   if (autoConsentParameter) {
     // Check consent state from Stape's Data Tag
@@ -635,13 +664,21 @@ function isConsentDeclined() {
   return ['0', 'false'].indexOf(awinConsentSignal) !== -1;
 }
 
-function replacePipeWithUnderscore(data) {
-  data = data || '';
-  return data.split('|').join('_');
+function isConsentGivenOrNotRequired(data, eventData) {
+  if (data.adStorageConsent !== 'required') return true;
+  if (eventData.consent_state) return !!eventData.consent_state.ad_storage;
+  const xGaGcs = eventData['x-ga-gcs'] || ''; // x-ga-gcs is a string like "G110"
+  return xGaGcs[2] === '1';
 }
 
 function enc(data) {
-  return encodeUriComponent(data || '');
+  if (['null', 'undefined'].indexOf(getType(data)) !== -1) data = '';
+  return encodeUriComponent(makeString(data));
+}
+
+function replacePipeWithUnderscore(data) {
+  data = data || '';
+  return data.split('|').join('_');
 }
 
 function getPriceString(price) {
@@ -1244,4 +1281,5 @@ setup: const logToConsole = require('logToConsole');
 ___NOTES___
 
 Created on 10/11/2021, 09:29:27
+
 
