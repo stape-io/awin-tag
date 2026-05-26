@@ -384,34 +384,6 @@ ___TEMPLATE_PARAMETERS___
         "defaultValue": "optional"
       }
     ]
-  },
-  {
-    "type": "GROUP",
-    "name": "logsGroup",
-    "displayName": "Logs Settings",
-    "groupStyle": "ZIPPY_CLOSED",
-    "subParams": [
-      {
-        "type": "RADIO",
-        "name": "logType",
-        "radioItems": [
-          {
-            "value": "no",
-            "displayValue": "Do not log"
-          },
-          {
-            "value": "debug",
-            "displayValue": "Log to console during debug and preview"
-          },
-          {
-            "value": "always",
-            "displayValue": "Always log to console"
-          }
-        ],
-        "simpleValueType": true,
-        "defaultValue": "debug"
-      }
-    ]
   }
 ]
 
@@ -426,7 +398,6 @@ const getEventData = require('getEventData');
 const getRequestHeader = require('getRequestHeader');
 const getType = require('getType');
 const JSON = require('JSON');
-const logToConsole = require('logToConsole');
 const makeString = require('makeString');
 const parseUrl = require('parseUrl');
 const sendHttpRequest = require('sendHttpRequest');
@@ -451,8 +422,6 @@ if (url && url.lastIndexOf('https://gtm-msr.appspot.com/', 0) === 0) {
   Vendor related functions
 ==============================================================================*/
 
-const isLoggingEnabled = determinateIsLoggingEnabled();
-const traceId = getRequestHeader('trace-id');
 const eventName = eventData.event_name;
 const PAGE_VIEW_EVENT = data.pageViewEvent || 'page_view';
 const PURCHASE_EVENT = data.purchaseEvent || 'purchase';
@@ -595,36 +564,9 @@ switch (eventName) {
       });
     }
 
-    if (isLoggingEnabled) {
-      logToConsole(
-        JSON.stringify({
-          Name: 'Awin',
-          Type: 'Request',
-          TraceId: traceId,
-          EventName: 'Conversion',
-          RequestMethod: 'GET',
-          RequestUrl: requestUrl
-        })
-      );
-    }
-
     sendHttpRequest(
       requestUrl,
       (statusCode, headers, body) => {
-        if (isLoggingEnabled) {
-          logToConsole(
-            JSON.stringify({
-              Name: 'Awin',
-              Type: 'Response',
-              TraceId: traceId,
-              EventName: 'Conversion',
-              ResponseStatusCode: statusCode,
-              ResponseHeaders: headers,
-              ResponseBody: body
-            })
-          );
-        }
-
         if (statusCode >= 200 && statusCode < 300) {
           data.gtmOnSuccess();
         } else {
@@ -685,28 +627,6 @@ function getPriceString(price) {
   const priceType = getType(price);
   const isEmptyPrice = priceType === 'undefined' || priceType === 'null';
   return isEmptyPrice ? '' : makeString(price);
-}
-
-function determinateIsLoggingEnabled() {
-  const containerVersion = getContainerVersion();
-  const isDebug = !!(
-    containerVersion &&
-    (containerVersion.debugMode || containerVersion.previewMode)
-  );
-
-  if (!data.logType) {
-    return isDebug;
-  }
-
-  if (data.logType === 'no') {
-    return false;
-  }
-
-  if (data.logType === 'debug') {
-    return isDebug;
-  }
-
-  return data.logType === 'always';
 }
 
 
@@ -938,6 +858,29 @@ ___SERVER_PERMISSIONS___
       },
       "param": [
         {
+          "key": "headerWhitelist",
+          "value": {
+            "type": 2,
+            "listItem": [
+              {
+                "type": 3,
+                "mapKey": [
+                  {
+                    "type": 1,
+                    "string": "headerName"
+                  }
+                ],
+                "mapValue": [
+                  {
+                    "type": 1,
+                    "string": "referer"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
           "key": "headersAllowed",
           "value": {
             "type": 8,
@@ -955,7 +898,7 @@ ___SERVER_PERMISSIONS___
           "key": "headerAccess",
           "value": {
             "type": 1,
-            "string": "any"
+            "string": "specific"
           }
         },
         {
@@ -1004,27 +947,6 @@ ___SERVER_PERMISSIONS___
                 "string": "awin_sn_awc"
               }
             ]
-          }
-        }
-      ]
-    },
-    "clientAnnotations": {
-      "isEditedByUser": true
-    },
-    "isRequired": true
-  },
-  {
-    "instance": {
-      "key": {
-        "publicId": "logging",
-        "versionId": "1"
-      },
-      "param": [
-        {
-          "key": "environments",
-          "value": {
-            "type": 1,
-            "string": "all"
           }
         }
       ]
@@ -1175,7 +1097,7 @@ scenarios:
     ,\"item_list_id\":\"related_products\",\"item_list_name\":\"Related Products\"\
     ,\"item_variant\":\"green\",\"location_id\":\"ChIJIQBpAG2ahYAR_6128GcTUEo\",\"\
     price\":10.01,\"quantity\":3}]\n});\n\nmock('sendHttpRequest', function(url, onSuccess,\
-    \ onFailure) {\n  logToConsole(url);\n  assertThat(url).contains('ref=' + mockData.orderReference);\
+    \ onFailure) {\n  assertThat(url).contains('ref=' + mockData.orderReference);\
     \ \n  assertThat(url).contains('&bd[0]=AW:P|123123|' + mockData.orderReference\
     \ + '|SKU_12345|Stan%20and%20Friends%20Tee%20_%20aijsdiasjdijas%20_%20aisjdiajsd%20piee%20____%20kajsdkajsd%20__aasd');\n\
     });\n\nrunCode(mockData);"
@@ -1191,9 +1113,7 @@ scenarios:
       items: [{"item_id":"SKU_12345","item_name":"Stan and Friends Tee | aijsdiasjdijas | aisjdiajsd piee |||| kajsdkajsd ||aasd","affiliation":"Google Merchandise Store","coupon":"SUMMER_FUN","discount":2.22,"index":0,"item_brand":"Google","item_category":"Apparel|iajsdiajsd|oasodiasd","item_list_id":"related_products","item_list_name":"Related Products","item_variant":"green","location_id":"ChIJIQBpAG2ahYAR_6128GcTUEo","price":10.01,"quantity":3}]
     });
 
-    mock('sendHttpRequest', function(url, onSuccess, onFailure) {
-      logToConsole(url);
-      assertThat(url).contains('bd[0]=AW:P|123123|orderid123|SKU_12345|Stan%20and%20Friends%20Tee%20_%20aijsdiasjdijas%20_%20aisjdiajsd%20piee%20____%20kajsdkajsd%20__aasd|10.01|3|SKU_12345|DEFAULT|Apparel_iajsdiajsd_oasodiasd');
+    mock('sendHttpRequest', function(url, onSuccess, onFailure) {  assertThat(url).contains('bd[0]=AW:P|123123|orderid123|SKU_12345|Stan%20and%20Friends%20Tee%20_%20aijsdiasjdijas%20_%20aisjdiajsd%20piee%20____%20kajsdkajsd%20__aasd|10.01|3|SKU_12345|DEFAULT|Apparel_iajsdiajsd_oasodiasd');
     });
 
     runCode(mockData);
@@ -1217,7 +1137,6 @@ scenarios:
     });
 
     mock('sendHttpRequest', function(url, onSuccess, onFailure) {
-      logToConsole(url);
       assertThat(url).contains('p1=gtm_s2s_stape_' + containerId);
     });
 
@@ -1239,7 +1158,6 @@ scenarios:
 
 
     mock('sendHttpRequest', function(url, onSuccess, onFailure) {
-      logToConsole(url);
       assertThat(url).contains('p1=gtm_s2s_stape_');
       assertThat(url).contains('p2=custom_param');
       assertThat(url).contains('p3=custom_param2');
@@ -1265,7 +1183,6 @@ scenarios:
     });
 
     mock('sendHttpRequest', function(url, onSuccess, onFailure) {
-      logToConsole(url);
       assertThat(url).contains('p1=gtm_s2s_stape_');
       assertThat(url).contains('p3=custom_param');
       assertThat(url).contains('p87=custom_param2');
@@ -1275,11 +1192,14 @@ scenarios:
     });
 
     runCode(mockData);
-setup: const logToConsole = require('logToConsole');
+setup: ''
 
 
 ___NOTES___
 
-Created on 10/11/2021, 09:29:27
+2026-05-25 Change Notes:
+ - Logging removal.
 
+
+Created on 10/11/2021, 09:29:27
 

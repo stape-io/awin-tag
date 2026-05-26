@@ -6,7 +6,6 @@ const getEventData = require('getEventData');
 const getRequestHeader = require('getRequestHeader');
 const getType = require('getType');
 const JSON = require('JSON');
-const logToConsole = require('logToConsole');
 const makeString = require('makeString');
 const parseUrl = require('parseUrl');
 const sendHttpRequest = require('sendHttpRequest');
@@ -31,8 +30,6 @@ if (url && url.lastIndexOf('https://gtm-msr.appspot.com/', 0) === 0) {
   Vendor related functions
 ==============================================================================*/
 
-const isLoggingEnabled = determinateIsLoggingEnabled();
-const traceId = getRequestHeader('trace-id');
 const eventName = eventData.event_name;
 const PAGE_VIEW_EVENT = data.pageViewEvent || 'page_view';
 const PURCHASE_EVENT = data.purchaseEvent || 'purchase';
@@ -175,36 +172,9 @@ switch (eventName) {
       });
     }
 
-    if (isLoggingEnabled) {
-      logToConsole(
-        JSON.stringify({
-          Name: 'Awin',
-          Type: 'Request',
-          TraceId: traceId,
-          EventName: 'Conversion',
-          RequestMethod: 'GET',
-          RequestUrl: requestUrl
-        })
-      );
-    }
-
     sendHttpRequest(
       requestUrl,
       (statusCode, headers, body) => {
-        if (isLoggingEnabled) {
-          logToConsole(
-            JSON.stringify({
-              Name: 'Awin',
-              Type: 'Response',
-              TraceId: traceId,
-              EventName: 'Conversion',
-              ResponseStatusCode: statusCode,
-              ResponseHeaders: headers,
-              ResponseBody: body
-            })
-          );
-        }
-
         if (statusCode >= 200 && statusCode < 300) {
           data.gtmOnSuccess();
         } else {
@@ -265,26 +235,4 @@ function getPriceString(price) {
   const priceType = getType(price);
   const isEmptyPrice = priceType === 'undefined' || priceType === 'null';
   return isEmptyPrice ? '' : makeString(price);
-}
-
-function determinateIsLoggingEnabled() {
-  const containerVersion = getContainerVersion();
-  const isDebug = !!(
-    containerVersion &&
-    (containerVersion.debugMode || containerVersion.previewMode)
-  );
-
-  if (!data.logType) {
-    return isDebug;
-  }
-
-  if (data.logType === 'no') {
-    return false;
-  }
-
-  if (data.logType === 'debug') {
-    return isDebug;
-  }
-
-  return data.logType === 'always';
 }
