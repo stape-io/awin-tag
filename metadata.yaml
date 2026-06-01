@@ -1,6 +1,8 @@
 homepage: 'https://stape.io/'
 documentation: 'https://github.com/stape-io/awin-tag'
 versions:
+  - sha: 9b9e6a0b575f90e12ffa213beb915bcd86eaa777
+    changeNotes: Logging removal.
   - sha: 4127f006121f4e034b81ec269f3946b5ddf988cd
     changeNotes: Added Consent Settings section.
   - sha: db2b4f72eeb8bb4651eeee1fed48ece125f519dc
